@@ -1,0 +1,85 @@
+# ── docker-compose.yml ─────────────────────────────────────
+# Servicos:
+#   redis   — banco de dados em memoria
+#   api     — FastAPI: painel web + REST API
+#   worker  — consumidor da fila (roda os testes Playwright)
+#
+# Deploy no Coolify:
+#   1. Suba este repo no seu Git (GitHub, GitLab etc.)
+#   2. No Coolify: New Resource > Docker Compose
+#   3. Aponte para o repositorio
+#   4. Configure as variaveis de ambiente em Environment Variables
+#   5. Coolify cuida do dominio e SSL automaticamente
+#
+# Variaveis de ambiente obrigatorias (configure no Coolify):
+#   APP_BASE_URL       - URL da aplicacao a testar (ex: https://app.suaempresa.com)
+#   APP_USERNAME       - usuario de teste
+#   APP_PASSWORD       - senha de teste
+#   ANTHROPIC_API_KEY  - chave da API Claude para analise visual
+# ─────────────────────────────────────────────────────────────
+
+services:
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    restart: always
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - APP_BASE_URL=${APP_BASE_URL}
+      - APP_USERNAME=${APP_USERNAME}
+      - APP_PASSWORD=${APP_PASSWORD}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - ENV=${ENV:-production}
+      - PORT=8000
+    volumes:
+      - ./reports:/app/reports
+      - ./screenshots:/app/screenshots
+      - ./config.yaml:/app/config.yaml:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: ["python", "api.py"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  worker:
+    build: .
+    restart: always
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - APP_BASE_URL=${APP_BASE_URL}
+      - APP_USERNAME=${APP_USERNAME}
+      - APP_PASSWORD=${APP_PASSWORD}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    volumes:
+      - ./reports:/app/reports
+      - ./screenshots:/app/screenshots
+      - ./config.yaml:/app/config.yaml:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    command: ["python", "worker.py"]
+    # Permite rodar Chromium headless dentro do container
+    shm_size: '2gb'
+
+volumes:
+  redis_data:
