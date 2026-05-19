@@ -3,7 +3,7 @@
 #   1. New Resource > Docker Compose > aponte para este repo
 #   2. Configure as variaveis em Environment Variables:
 #      APP_BASE_URL, APP_USERNAME, APP_PASSWORD, OPENAI_API_KEY
-#   3. Coolify cuida do dominio e SSL automaticamente
+#   3. Coolify cuida do dominio, SSL e roteamento automaticamente
 
 services:
 
@@ -22,8 +22,8 @@ services:
   api:
     build: .
     restart: always
-    ports:
-      - "${PORT:-8000}:8000"
+    expose:
+      - "8000"
     environment:
       - REDIS_URL=redis://redis:6379/0
       - APP_BASE_URL=${APP_BASE_URL}
