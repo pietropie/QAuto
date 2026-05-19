@@ -1,0 +1,15 @@
+# Ambiente
+.env
+__pycache__/
+*.pyc
+*.pyo
+
+# Saidas geradas
+reports/
+screenshots/
+*.zip
+
+# Editor
+.vscode/
+.idea/
+*.swp

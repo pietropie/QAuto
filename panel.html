@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QA Panel</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#273548;--border:#334155;
+  --primary:#6366f1;--primary-h:#4f46e5;--accent:#22d3ee;
+  --green:#22c55e;--yellow:#eab308;--red:#ef4444;
+  --text:#f1f5f9;--muted:#94a3b8;--radius:10px;
+}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
+header{background:linear-gradient(135deg,#1e1b4b,#0f172a);border-bottom:1px solid var(--border);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:20px}
+.logo h1{font-size:1.1rem;font-weight:700}.logo p{font-size:.75rem;color:var(--muted)}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block;margin-right:6px;transition:background .3s}
+.conn-dot.ok{background:var(--green)}.conn-dot.err{background:var(--red)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-h)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{background:var(--border)}
+.btn-success{background:#15803d;color:#fff}.btn-success:hover{background:#166534}
+.btn-danger{background:#991b1b;color:#fff}.btn-danger:hover{background:#7f1d1d}
+.btn-sm{padding:5px 11px;font-size:.78rem}.btn-icon{padding:6px;border-radius:6px}
+.tabs-bar{display:flex;gap:4px;padding:20px 32px 0;border-bottom:1px solid var(--border);overflow-x:auto}
+.tab-btn{display:flex;align-items:center;gap:8px;padding:10px 20px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.88rem;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;border-radius:6px 6px 0 0}
+.tab-btn:hover{color:var(--text);background:var(--surface2)}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);background:var(--surface)}
+.tab-badge{background:var(--primary);color:#fff;font-size:.68rem;font-weight:700;padding:1px 6px;border-radius:20px;min-width:18px;text-align:center}
+.pane{display:none;padding:28px 32px}.pane.active{display:block}
+.pane-header{margin-bottom:20px}.pane-header h2{font-size:1.05rem;font-weight:700;margin-bottom:4px}.pane-header p{color:var(--muted);font-size:.85rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:12px}
+.card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.card-title{font-weight:600;font-size:.93rem}.card-actions{display:flex;gap:6px;flex-shrink:0}
+label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:4px;font-weight:500}
+input[type="text"],textarea,select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:9px 12px;font-size:.85rem;font-family:inherit;transition:border-color .15s;outline:none}
+input[type="text"]:focus,textarea:focus,select:focus{border-color:var(--primary)}
+textarea{resize:vertical;min-height:80px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px}
+.form-group{margin-bottom:12px}
+.add-bar{display:flex;gap:8px;margin-bottom:12px}.add-bar input{flex:1}
+.hint{font-size:.74rem;color:var(--muted);margin-top:3px}
+.step-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.step-item:last-child{border-bottom:none}
+.step-num{min-width:22px;height:22px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;margin-top:2px}
+.step-text{flex:1;font-size:.86rem}
+.sev{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.73rem;font-weight:600}
+.sev-alto{background:#450a0a;color:#fca5a5}.sev-medio{background:#431407;color:#fdba74}.sev-baixo{background:#052e16;color:#86efac}
+.empty{text-align:center;padding:40px 24px;color:var(--muted)}.empty .emoji{font-size:2rem;margin-bottom:10px}.empty p{font-size:.85rem}
+/* Fila e historico */
+.run-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:8px}
+.run-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.run-label{font-weight:600;font-size:.9rem}
+.run-meta{font-size:.78rem;color:var(--muted)}
+.run-stats{display:flex;gap:12px;margin-top:10px}
+.stat-pill{font-size:.78rem;font-weight:700;padding:3px 10px;border-radius:20px}
+.stat-pass{background:#052e16;color:var(--green)}.stat-fail{background:#450a0a;color:#fca5a5}.stat-warn{background:#431407;color:#fdba74}
+/* Live status bar */
+#status-bar{background:var(--surface2);border-bottom:1px solid var(--border);padding:10px 32px;display:none;align-items:center;gap:16px;flex-wrap:wrap}
+#status-bar.visible{display:flex}
+.status-pulse{width:10px;height:10px;border-radius:50%;background:var(--primary);animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.progress-bar{flex:1;height:6px;background:var(--border);border-radius:3px;min-width:120px;overflow:hidden}
+.progress-fill{height:100%;background:var(--primary);border-radius:3px;transition:width .4s}
+/* Toast */
+#toast{position:fixed;bottom:24px;right:24px;background:#14532d;color:#bbf7d0;border:1px solid #16a34a;padding:12px 20px;border-radius:8px;font-size:.85rem;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;z-index:999}
+#toast.show{opacity:1;transform:translateY(0)}
+/* Queue jobs */
+.job-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;margin-bottom:6px;font-size:.85rem}
+.job-type-badge{background:var(--primary);color:#fff;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:4px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🔍</div>
+    <div>
+      <h1>QA Automation Panel</h1>
+      <p><span class="conn-dot" id="conn-dot"></span><span id="conn-label">Conectando...</span></p>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn btn-secondary" onclick="saveInstructions()">💾 Salvar no Redis</button>
+    <button class="btn btn-success" onclick="enqueueRun('full','Run Completo')">▶ Rodar Tudo</button>
+  </div>
+</header>
+
+<!-- Status bar do run atual -->
+<div id="status-bar">
+  <div class="status-pulse"></div>
+  <span id="status-suite" style="font-size:.85rem;font-weight:600">Aguardando...</span>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <span id="status-counts" style="font-size:.78rem;color:var(--muted)"></span>
+</div>
+
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="switchTab('geral')"    id="tab-geral">💡 Gerais <span class="tab-badge" id="badge-geral">0</span></button>
+  <button class="tab-btn"        onclick="switchTab('paginas')"  id="tab-paginas">📄 Páginas <span class="tab-badge" id="badge-paginas">0</span></button>
+  <button class="tab-btn"        onclick="switchTab('fluxos')"   id="tab-fluxos">🔄 Fluxos <span class="tab-badge" id="badge-fluxos">0</span></button>
+  <button class="tab-btn"        onclick="switchTab('fila')"     id="tab-fila">🗂 Fila <span class="tab-badge" id="badge-fila">0</span></button>
+  <button class="tab-btn"        onclick="switchTab('historico')" id="tab-historico">📊 Histórico</button>
+  <button class="tab-btn"        onclick="switchTab('contexto')" id="tab-contexto">🧠 Contexto IA</button>
+</div>
+
+<!-- PANE: GERAIS -->
+<div class="pane active" id="pane-geral">
+  <div class="pane-header"><h2>💡 Recomendações Gerais</h2><p>O que a IA deve verificar em qualquer página, em português.</p></div>
+  <div class="card">
+    <div class="add-bar">
+      <input type="text" id="input-geral" placeholder='Ex: "Botão salvar deve ficar desabilitado durante envio"' onkeydown="if(event.key==='Enter')addGeral()">
+      <select id="sev-geral" style="width:130px;flex-shrink:0">
+        <option value="alto">🔴 Crítico</option>
+        <option value="medio" selected>🟡 Médio</option>
+        <option value="baixo">🟢 Info</option>
+      </select>
+      <button class="btn btn-primary" onclick="addGeral()">+ Add</button>
+    </div>
+  </div>
+  <div id="list-geral"></div>
+</div>
+
+<!-- PANE: PÁGINAS -->
+<div class="pane" id="pane-paginas">
+  <div class="pane-header"><h2>📄 Instruções por Página</h2><p>Instruções específicas para cada tela da aplicação.</p></div>
+  <div class="card">
+    <div class="form-row">
+      <div class="form-group"><label>Nome da página</label><input type="text" id="pg-name" placeholder="Ex: Tela de Novo Pedido"></div>
+      <div class="form-group"><label>Path</label><input type="text" id="pg-path" placeholder="Ex: /pedidos/novo"></div>
+    </div>
+    <div class="form-group"><label>Instruções (uma por linha)</label><textarea id="pg-instructions" rows="4" placeholder="Verificar se formulário exige pelo menos um produto&#10;Campo desconto só aceita 0-100"></textarea></div>
+    <div class="form-group"><label>Contexto de negócio</label><textarea id="pg-context" rows="2" placeholder="Ex: Tela B2B. Clientes PJ têm limite de R$50.000."></textarea></div>
+    <button class="btn btn-primary" onclick="addPagina()">+ Adicionar Página</button>
+  </div>
+  <div id="list-paginas"></div>
+</div>
+
+<!-- PANE: FLUXOS -->
+<div class="pane" id="pane-fluxos">
+  <div class="pane-header"><h2>🔄 Fluxos / Jornadas</h2><p>Jornadas completas com etapas e regras de negócio.</p></div>
+  <div class="card">
+    <div class="form-row">
+      <div class="form-group"><label>Nome do fluxo</label><input type="text" id="fl-name" placeholder="Ex: Jornada de compra com desconto"></div>
+      <div class="form-group"><label>Criticidade</label>
+        <select id="fl-criticidade"><option value="critico">🔴 Crítico</option><option value="importante" selected>🟡 Importante</option><option value="informativo">🟢 Info</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Descrição e regras de negócio</label><textarea id="fl-desc" rows="3" placeholder="Descreva o fluxo e as regras que devem ser respeitadas..."></textarea></div>
+    <div class="form-group"><label>Etapas (uma por linha, em ordem)</label><textarea id="fl-steps" rows="5" placeholder="1. Fazer login&#10;2. Acessar /pedidos&#10;3. Criar novo pedido"></textarea></div>
+    <div class="form-group"><label>O que verificar ao final</label><textarea id="fl-checks" rows="3" placeholder="Pedido deve aparecer na lista&#10;Total calculado corretamente"></textarea></div>
+    <button class="btn btn-primary" onclick="addFluxo()">+ Adicionar Fluxo</button>
+  </div>
+  <div id="list-fluxos"></div>
+</div>
+
+<!-- PANE: FILA -->
+<div class="pane" id="pane-fila">
+  <div class="pane-header"><h2>🗂 Fila de Testes</h2><p>Adicione runs à fila. O worker executa automaticamente.</p></div>
+  <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+    <div style="flex:1;min-width:180px">
+      <label>Tipo de run</label>
+      <select id="queue-type">
+        <option value="full">🔁 Run Completo</option>
+        <option value="custom">🎯 Só instruções personalizadas</option>
+        <option value="visual">🎨 Só visual (IA)</option>
+        <option value="navegacao">🧭 Só navegação</option>
+        <option value="formularios">📋 Só formulários</option>
+        <option value="pedidos">🛒 Só pedidos</option>
+      </select>
+    </div>
+    <div style="flex:2;min-width:200px">
+      <label>Rótulo</label>
+      <input type="text" id="queue-label" placeholder="Ex: Teste após deploy v2.4">
+    </div>
+    <button class="btn btn-success" onclick="enqueueFromForm()">+ Enfileirar</button>
+    <button class="btn btn-danger btn-sm" onclick="clearQueue()" title="Limpar fila">🗑 Limpar fila</button>
+  </div>
+  <div id="queue-list"></div>
+</div>
+
+<!-- PANE: HISTÓRICO -->
+<div class="pane" id="pane-historico">
+  <div class="pane-header"><h2>📊 Histórico de Execuções</h2><p>Últimos runs executados pelo worker.</p></div>
+  <div id="history-list"></div>
+</div>
+
+<!-- PANE: CONTEXTO IA -->
+<div class="pane" id="pane-contexto">
+  <div class="pane-header">
+    <h2>🧠 Contexto Acumulado da IA</h2>
+    <p>O que a IA aprendeu sobre sua aplicação ao longo dos runs.</p>
+  </div>
+  <div style="display:flex;gap:10px;margin-bottom:16px">
+    <button class="btn btn-secondary btn-sm" onclick="loadContext()">🔄 Atualizar</button>
+    <button class="btn btn-danger btn-sm" onclick="resetContext()">🗑 Resetar contexto</button>
+  </div>
+  <div id="context-content"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ━━━━━━━━━━━━━━━━━━ STATE ━━━━━━━━━━━━━━━━━━
+const API = '';  // mesmo host
+let state = { general:[], pages:[], flows:[] };
+let es = null;   // EventSource SSE
+
+// ━━━━━━━━━━━━━━━━━━ INIT ━━━━━━━━━━━━━━━━━━
+window.onload = async () => {
+  checkConn();
+  await loadInstructions();
+  await loadQueue();
+  startSSE();
+};
+
+// ━━━━━━━━━━━━━━━━━━ CONEXAO ━━━━━━━━━━━━━━━━━━
+async function checkConn() {
+  try {
+    const r = await fetch(API + '/api/status');
+    setConn(r.ok);
+  } catch { setConn(false); }
+  setTimeout(checkConn, 10000);
+}
+function setConn(ok) {
+  document.getElementById('conn-dot').className  = 'conn-dot ' + (ok ? 'ok' : 'err');
+  document.getElementById('conn-label').textContent = ok ? 'Conectado ao servidor' : 'Sem conexao com servidor';
+}
+
+// ━━━━━━━━━━━━━━━━━━ SSE ━━━━━━━━━━━━━━━━━━
+function startSSE() {
+  if (es) es.close();
+  es = new EventSource(API + '/api/events');
+  es.onmessage = e => {
+    try {
+      const d = JSON.parse(e.data);
+      if (d.type === 'heartbeat') return;
+      handleSSE(d);
+    } catch {}
+  };
+  es.onerror = () => { setTimeout(startSSE, 5000); };
+}
+function handleSSE(d) {
+  const bar = document.getElementById('status-bar');
+  if (d.type === 'finished') {
+    bar.classList.remove('visible');
+    loadQueue();
+    if (document.getElementById('pane-historico').classList.contains('active')) loadHistory();
+    if (document.getElementById('pane-contexto').classList.contains('active')) loadContext();
+    toast('Run finalizado: ' + d.passed + ' OK / ' + d.failed + ' falhas');
+  } else if (d.type === 'started' || d.type === 'progress') {
+    bar.classList.add('visible');
+    document.getElementById('status-suite').textContent = d.suite || d.label || 'Rodando...';
+    const total = (d.passed||0) + (d.failed||0) + (d.warned||0);
+    const pct   = total > 0 ? Math.min(total * 3, 100) : 5;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('status-counts').textContent =
+      `${d.passed||0} OK  ${d.failed||0} falhas  ${d.warned||0} avisos`;
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━ TABS ━━━━━━━━━━━━━━━━━━
+function switchTab(id) {
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('pane-' + id).classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+  if (id === 'historico') loadHistory();
+  if (id === 'contexto')  loadContext();
+  if (id === 'fila')      loadQueue();
+}
+
+// ━━━━━━━━━━━━━━━━━━ INSTRUCOES ━━━━━━━━━━━━━━━━━━
+async function loadInstructions() {
+  try {
+    const r = await fetch(API + '/api/instructions');
+    if (!r.ok) return;
+    const d = await r.json();
+    state.general = d.general || [];
+    state.pages   = d.pages   || [];
+    state.flows   = d.flows   || [];
+    renderAll();
+    updateBadges();
+  } catch {}
+}
+
+async function saveInstructions() {
+  try {
+    const r = await fetch(API + '/api/instructions', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ general: state.general, pages: state.pages, flows: state.flows }),
+    });
+    if (r.ok) toast('Salvo no Redis!');
+    else      toast('Erro ao salvar');
+  } catch(e) { toast('Erro: ' + e.message); }
+}
+
+// ━━━━━━━━━━━━━━━━━━ BADGES ━━━━━━━━━━━━━━━━━━
+function updateBadges() {
+  document.getElementById('badge-geral').textContent   = state.general.length;
+  document.getElementById('badge-paginas').textContent = state.pages.length;
+  document.getElementById('badge-fluxos').textContent  = state.flows.length;
+}
+
+// ━━━━━━━━━━━━━━━━━━ GERAIS ━━━━━━━━━━━━━━━━━━
+function addGeral() {
+  const text = document.getElementById('input-geral').value.trim();
+  const sev  = document.getElementById('sev-geral').value;
+  if (!text) { toast('Digite uma instrucao'); return; }
+  state.general.push({ text, severity: sev });
+  document.getElementById('input-geral').value = '';
+  renderGeral(); updateBadges();
+}
+function removeGeral(i) { state.general.splice(i,1); renderGeral(); updateBadges(); }
+function renderGeral() {
+  const el = document.getElementById('list-geral');
+  if (!state.general.length) { el.innerHTML = '<div class="empty"><div class="emoji">💭</div><p>Nenhuma instrucao ainda.</p></div>'; return; }
+  el.innerHTML = state.general.map((g,i) => `
+    <div class="card" style="display:flex;align-items:flex-start;gap:12px">
+      <span class="sev sev-${g.severity}">${{alto:'🔴 Crítico',medio:'🟡 Médio',baixo:'🟢 Info'}[g.severity]}</span>
+      <span style="flex:1;font-size:.88rem">${esc(g.text)}</span>
+      <button class="btn btn-danger btn-icon btn-sm" onclick="removeGeral(${i})">✕</button>
+    </div>`).join('');
+}
+
+// ━━━━━━━━━━━━━━━━━━ PAGINAS ━━━━━━━━━━━━━━━━━━
+function addPagina() {
+  const name = document.getElementById('pg-name').value.trim();
+  const path = document.getElementById('pg-path').value.trim();
+  const raw  = document.getElementById('pg-instructions').value.trim();
+  const ctx  = document.getElementById('pg-context').value.trim();
+  if (!name||!path||!raw) { toast('Preencha nome, path e instrucoes'); return; }
+  state.pages.push({ name, path, instructions: raw.split('\n').filter(Boolean), context: ctx });
+  ['pg-name','pg-path','pg-instructions','pg-context'].forEach(id => document.getElementById(id).value='');
+  renderPaginas(); updateBadges();
+}
+function removePagina(i) { state.pages.splice(i,1); renderPaginas(); updateBadges(); }
+function renderPaginas() {
+  const el = document.getElementById('list-paginas');
+  if (!state.pages.length) { el.innerHTML = '<div class="empty"><div class="emoji">📄</div><p>Nenhuma pagina configurada.</p></div>'; return; }
+  el.innerHTML = state.pages.map((p,i) => `
+    <div class="card">
+      <div class="card-header">
+        <div><div class="card-title">${esc(p.name)}</div><code style="font-size:.76rem;color:var(--accent)">${esc(p.path)}</code></div>
+        <div class="card-actions"><button class="btn btn-danger btn-icon btn-sm" onclick="removePagina(${i})">✕</button></div>
+      </div>
+      <ul style="list-style:none">${p.instructions.map((s,j)=>`<li class="step-item"><span class="step-num">${j+1}</span><span class="step-text">${esc(s)}</span></li>`).join('')}</ul>
+      ${p.context?`<p class="hint" style="margin-top:8px"><strong>Contexto:</strong> ${esc(p.context)}</p>`:''}
+    </div>`).join('');
+}
+
+// ━━━━━━━━━━━━━━━━━━ FLUXOS ━━━━━━━━━━━━━━━━━━
+function addFluxo() {
+  const name  = document.getElementById('fl-name').value.trim();
+  const crit  = document.getElementById('fl-criticidade').value;
+  const desc  = document.getElementById('fl-desc').value.trim();
+  const rawS  = document.getElementById('fl-steps').value.trim();
+  const rawC  = document.getElementById('fl-checks').value.trim();
+  if (!name||!desc||!rawS) { toast('Preencha nome, descricao e etapas'); return; }
+  state.flows.push({ name, criticidade: crit, desc, steps: rawS.split('\n').filter(Boolean), checks: rawC.split('\n').filter(Boolean) });
+  ['fl-name','fl-desc','fl-steps','fl-checks'].forEach(id => document.getElementById(id).value='');
+  renderFluxos(); updateBadges();
+}
+function removeFluxo(i) { state.flows.splice(i,1); renderFluxos(); updateBadges(); }
+function renderFluxos() {
+  const el = document.getElementById('list-fluxos');
+  if (!state.flows.length) { el.innerHTML = '<div class="empty"><div class="emoji">🔄</div><p>Nenhum fluxo configurado.</p></div>'; return; }
+  const cl = {critico:'sev-alto',importante:'sev-medio',informativo:'sev-baixo'};
+  el.innerHTML = state.flows.map((f,i) => `
+    <div class="card">
+      <div class="card-header">
+        <div><div class="card-title">${esc(f.name)}</div><span class="sev ${cl[f.criticidade]}" style="margin-top:4px;display:inline-block">${f.criticidade}</span></div>
+        <div class="card-actions"><button class="btn btn-danger btn-icon btn-sm" onclick="removeFluxo(${i})">✕</button></div>
+      </div>
+      <p style="font-size:.84rem;color:var(--muted);margin-bottom:10px">${esc(f.desc)}</p>
+      <ul style="list-style:none">${f.steps.map((s,j)=>`<li class="step-item"><span class="step-num">${j+1}</span><span class="step-text">${esc(s)}</span></li>`).join('')}</ul>
+    </div>`).join('');
+}
+
+// ━━━━━━━━━━━━━━━━━━ FILA ━━━━━━━━━━━━━━━━━━
+async function loadQueue() {
+  try {
+    const r = await fetch(API + '/api/queue');
+    if (!r.ok) return;
+    const d = await r.json();
+    document.getElementById('badge-fila').textContent = d.length || 0;
+    const el = document.getElementById('queue-list');
+    if (!d.jobs || !d.jobs.length) {
+      el.innerHTML = '<div class="empty" style="padding:24px"><div class="emoji">✅</div><p>Fila vazia</p></div>'; return;
+    }
+    el.innerHTML = d.jobs.map((j,i) => `
+      <div class="job-item">
+        <span class="job-type-badge">${j.type||'full'}</span>
+        <span style="flex:1">${esc(j.label||'Run')}</span>
+        <span style="font-size:.75rem;color:var(--muted)">${j.queued_at ? new Date(j.queued_at*1000).toLocaleTimeString('pt-BR') : ''}</span>
+      </div>`).join('');
+  } catch {}
+}
+
+async function enqueueRun(type, label) {
+  try {
+    await saveInstructions();
+    const r = await fetch(API + '/api/queue', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ type, label }),
+    });
+    if (r.ok) { toast('Job enfileirado!'); loadQueue(); }
+  } catch(e) { toast('Erro: ' + e.message); }
+}
+
+function enqueueFromForm() {
+  const type  = document.getElementById('queue-type').value;
+  const label = document.getElementById('queue-label').value.trim() || 'Run agendado';
+  enqueueRun(type, label);
+}
+
+async function clearQueue() {
+  if (!confirm('Limpar toda a fila?')) return;
+  await fetch(API + '/api/queue', { method:'DELETE' });
+  loadQueue(); toast('Fila limpa.');
+}
+
+// ━━━━━━━━━━━━━━━━━━ HISTORICO ━━━━━━━━━━━━━━━━━━
+async function loadHistory() {
+  try {
+    const r = await fetch(API + '/api/history?limit=20');
+    if (!r.ok) return;
+    const d = await r.json();
+    const el = document.getElementById('history-list');
+    if (!d.runs || !d.runs.length) {
+      el.innerHTML = '<div class="empty"><div class="emoji">📊</div><p>Nenhum run ainda. Execute um teste para ver o historico.</p></div>'; return;
+    }
+    el.innerHTML = d.runs.map(run => {
+      const dt = run.started_at ? new Date(run.started_at*1000).toLocaleString('pt-BR') : '';
+      const dur = run.duration ? `${run.duration}s` : '';
+      const pct = run.total ? Math.round(run.passed/run.total*100) : 0;
+      const color = run.failed > 0 ? 'var(--red)' : run.warned > 0 ? 'var(--yellow)' : 'var(--green)';
+      return `<div class="run-card">
+        <div class="run-header">
+          <div>
+            <div class="run-label">${esc(run.label||'Run')}</div>
+            <div class="run-meta">${dt} &nbsp;·&nbsp; ${dur}</div>
+          </div>
+          <div style="font-size:1.4rem;font-weight:700;color:${color}">${pct}%</div>
+        </div>
+        <div class="run-stats">
+          <span class="stat-pill stat-pass">✅ ${run.passed} OK</span>
+          <span class="stat-pill stat-fail">❌ ${run.failed} falhas</span>
+          <span class="stat-pill stat-warn">⚠ ${run.warned} avisos</span>
+          <span style="font-size:.75rem;color:var(--muted)">${run.total} total</span>
+        </div>
+      </div>`;
+    }).join('');
+  } catch {}
+}
+
+// ━━━━━━━━━━━━━━━━━━ CONTEXTO IA ━━━━━━━━━━━━━━━━━━
+async function loadContext() {
+  try {
+    const r = await fetch(API + '/api/context');
+    if (!r.ok) return;
+    const d = await r.json();
+    const el = document.getElementById('context-content');
+    const ctx = d.accumulated || {};
+    const hi  = d.high_risk   || [];
+
+    let html = '';
+
+    if (ctx.summary) {
+      html += `<div class="card"><strong style="color:var(--accent)">📝 Resumo</strong><p style="margin-top:8px;font-size:.88rem">${esc(ctx.summary)}</p></div>`;
+    }
+
+    if (ctx.known_issues && ctx.known_issues.length) {
+      html += `<div class="card"><strong style="color:var(--red)">⚠ Problemas conhecidos</strong><ul style="margin-top:8px;padding-left:18px;font-size:.86rem;line-height:2">${ctx.known_issues.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`;
+    }
+
+    if (ctx.stable_areas && ctx.stable_areas.length) {
+      html += `<div class="card"><strong style="color:var(--green)">✅ Áreas estáveis</strong><ul style="margin-top:8px;padding-left:18px;font-size:.86rem;line-height:2">${ctx.stable_areas.map(a=>`<li>${esc(a)}</li>`).join('')}</ul></div>`;
+    }
+
+    if (hi.length) {
+      html += `<div class="card"><strong style="color:var(--yellow)">🎯 Páginas de alto risco (mais falhas)</strong><ul style="margin-top:8px;list-style:none">`;
+      html += hi.map(([path,count])=>`<li class="step-item"><span class="step-num">${count}</span><span class="step-text"><code>${esc(path)}</code></span></li>`).join('');
+      html += '</ul></div>';
+    }
+
+    if (!html) {
+      html = '<div class="empty"><div class="emoji">🧠</div><p>Nenhum contexto acumulado ainda.<br>Execute alguns testes para a IA aprender sobre sua aplicacao.</p></div>';
+    }
+
+    el.innerHTML = html;
+  } catch(e) { document.getElementById('context-content').innerHTML = `<p style="color:var(--muted)">Erro: ${e.message}</p>`; }
+}
+
+async function resetContext() {
+  if (!confirm('Apagar todo o contexto acumulado?')) return;
+  await fetch(API + '/api/context', { method:'DELETE' });
+  loadContext(); toast('Contexto resetado.');
+}
+
+// ━━━━━━━━━━━━━━━━━━ UTILS ━━━━━━━━━━━━━━━━━━
+function renderAll() { renderGeral(); renderPaginas(); renderFluxos(); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function toast(msg, ms=2800) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), ms);
+}
+</script>
+</body>
+</html>

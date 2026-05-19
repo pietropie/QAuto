@@ -1,0 +1,163 @@
+# ============================================================
+#  QA Automation - Arquivo de Configuração
+#  Preencha os campos marcados com TODO antes de rodar
+# ============================================================
+
+app:
+  # URL base da aplicação (ex: https://app.suaempresa.com.br)
+  base_url: "TODO: https://sua-app.com.br"
+
+  # Credenciais de login
+  login:
+    url_path: "/login"          # caminho da página de login
+    username_selector: "input[name='email']"   # seletor do campo de email/usuário
+    password_selector: "input[name='password']" # seletor do campo de senha
+    submit_selector: "button[type='submit']"    # seletor do botão de entrar
+    username: "TODO: seu-usuario@empresa.com"
+    password: "TODO: sua-senha-de-teste"
+    success_indicator: ".dashboard"  # elemento que aparece após login bem-sucedido
+
+# ============================================================
+#  FLUXOS DE NEGÓCIO PARA TESTAR
+# ============================================================
+
+flows:
+
+  # --- Navegação entre páginas ---
+  navigation:
+    enabled: true
+    pages:
+      - name: "Home / Dashboard"
+        path: "/"
+        must_contain:           # textos ou seletores que DEVEM existir na página
+          - "Dashboard"
+      - name: "Pedidos"
+        path: "/pedidos"
+        must_contain:
+          - "Pedidos"
+      - name: "Produtos"
+        path: "/produtos"
+        must_contain:
+          - "Produtos"
+      # Adicione mais páginas conforme necessário:
+      # - name: "Clientes"
+      #   path: "/clientes"
+      #   must_contain:
+      #     - "Clientes"
+
+  # --- Validação de formulários ---
+  forms:
+    enabled: true
+    test_cases:
+      - name: "Formulário de novo pedido"
+        url_path: "/pedidos/novo"
+        fields:
+          - selector: "input[name='cliente']"
+            label: "Cliente"
+            required: true
+            test_empty: true          # testa submissão vazia
+            test_value: "Cliente Teste"
+          - selector: "input[name='produto']"
+            label: "Produto"
+            required: true
+            test_empty: true
+            test_value: "Produto XYZ"
+          - selector: "input[name='quantidade']"
+            label: "Quantidade"
+            required: true
+            test_invalid: "abc"       # testa valor inválido
+            test_value: "5"
+        submit_selector: "button[type='submit']"
+        expected_error_selector: ".error-message, [role='alert']"
+
+      # Adicione mais formulários:
+      # - name: "Cadastro de cliente"
+      #   url_path: "/clientes/novo"
+      #   fields: ...
+
+  # --- Fluxo de pedidos (checkout / fechamento) ---
+  orders:
+    enabled: true
+    flow:
+      - step: "Acessar lista de pedidos"
+        url_path: "/pedidos"
+        assert_selector: "table, .pedidos-list"
+
+      - step: "Criar novo pedido"
+        url_path: "/pedidos/novo"
+        actions:
+          - type: "fill"
+            selector: "input[name='cliente']"
+            value: "Cliente Automatizado"
+          - type: "fill"
+            selector: "input[name='produto']"
+            value: "Produto Teste"
+          - type: "fill"
+            selector: "input[name='quantidade']"
+            value: "2"
+          - type: "click"
+            selector: "button[type='submit']"
+        assert_url_contains: "/pedidos"      # URL esperada após criar pedido
+        assert_selector: ".success, .alert-success"  # confirmação de sucesso
+
+      - step: "Verificar pedido criado"
+        url_path: "/pedidos"
+        assert_text: "Cliente Automatizado"  # texto que deve aparecer na lista
+
+      # Adicione mais etapas conforme o fluxo real:
+      # - step: "Fechar pedido"
+      #   url_path: "/pedidos/{id}/fechar"
+      #   ...
+
+  # --- Análise visual com IA ---
+  visual:
+    enabled: true
+    pages_to_screenshot:        # páginas que a IA vai analisar visualmente
+      - "/"
+      - "/pedidos"
+      - "/produtos"
+      - "/pedidos/novo"
+    check_responsive: true      # testa em mobile (375px) e desktop (1280px)
+    viewports:
+      desktop: { width: 1280, height: 800 }
+      mobile:  { width: 375,  height: 812 }
+
+# ============================================================
+#  IA - Claude API para análise visual
+# ============================================================
+
+ai:
+  enabled: true
+  # Chave da API da Anthropic (https://console.anthropic.com)
+  api_key: "TODO: sk-ant-..."
+  model: "claude-opus-4-6"
+  # Aspectos visuais que a IA deve verificar:
+  visual_checks:
+    - "elementos sobrepostos ou cortados"
+    - "textos ilegíveis ou truncados"
+    - "botões sem texto ou ícones quebrados"
+    - "imagens não carregadas (alt text visível)"
+    - "layout desalinhado ou quebrado"
+    - "cores de erro/alerta inesperadas"
+    - "formulários com campos sem label"
+    - "espaçamento inconsistente entre elementos"
+
+# ============================================================
+#  CONFIGURAÇÕES DO BROWSER
+# ============================================================
+
+browser:
+  headless: true          # false para ver o browser abrindo
+  slow_mo: 0              # ms de delay entre ações (útil para debug: 500)
+  timeout: 30000          # timeout global em ms
+  screenshots_on_failure: true
+  video_on_failure: false
+
+# ============================================================
+#  RELATÓRIO
+# ============================================================
+
+report:
+  output_dir: "./reports"
+  screenshots_dir: "./screenshots"
+  open_after_run: true    # abre o relatório HTML automaticamente
