@@ -42,12 +42,8 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.qauto-api.loadbalancer.server.port=8000"
     networks:
       - default
-      - coolify
 
   qauto-worker:
     build: .
@@ -78,5 +74,3 @@ volumes:
 
 networks:
   default:
-  coolify:
-    external: true
