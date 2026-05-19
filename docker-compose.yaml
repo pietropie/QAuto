@@ -37,10 +37,11 @@ services:
         condition: service_healthy
     command: ["python", "api.py"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/status"]
-      interval: 30s
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/status')"]
+      interval: 20s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 30s
     networks:
       - default
       - coolify
@@ -61,7 +62,7 @@ services:
       redis:
         condition: service_healthy
       api:
-        condition: service_healthy
+        condition: service_started
     command: ["python", "worker.py"]
     shm_size: '2gb'
     networks:
