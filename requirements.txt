@@ -2,7 +2,7 @@
 playwright==1.44.0
 
 # AI visual analysis
-anthropic==0.25.0
+openai>=1.30.0
 
 # API server
 fastapi==0.111.0

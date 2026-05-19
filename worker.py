@@ -48,8 +48,8 @@ def load_config(path: str = "config.yaml") -> dict:
         cfg.setdefault("app", {}).setdefault("login", {})["username"] = os.getenv("APP_USERNAME")
     if os.getenv("APP_PASSWORD"):
         cfg["app"]["login"]["password"] = os.getenv("APP_PASSWORD")
-    if os.getenv("ANTHROPIC_API_KEY"):
-        cfg.setdefault("ai", {})["api_key"] = os.getenv("ANTHROPIC_API_KEY")
+    if os.getenv("OPENAI_API_KEY"):
+        cfg.setdefault("ai", {})["api_key"] = os.getenv("OPENAI_API_KEY")
     return cfg
 
 
@@ -137,7 +137,7 @@ def _update_ai_context(r, reporter: WorkerReporter, config: dict):
     Isso permite que runs futuros saibam o que ja foi encontrado antes.
     """
     ai_cfg  = config.get("ai", {})
-    api_key = ai_cfg.get("api_key", os.getenv("ANTHROPIC_API_KEY", ""))
+    api_key = ai_cfg.get("api_key", os.getenv("OPENAI_API_KEY", ""))
     if not api_key or api_key.startswith("TODO"):
         return
 
@@ -166,10 +166,10 @@ def _update_ai_context(r, reporter: WorkerReporter, config: dict):
     )
 
     try:
-        import anthropic
-        client = anthropic.Anthropic(api_key=api_key)
-        msg = client.messages.create(
-            model=ai_cfg.get("model", "claude-opus-4-6"),
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key)
+        msg = client.chat.completions.create(
+            model=ai_cfg.get("model", "gpt-4o-mini"),
             max_tokens=800,
             messages=[{"role": "user", "content": prompt}],
         )

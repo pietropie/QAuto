@@ -128,9 +128,9 @@ flows:
 
 ai:
   enabled: true
-  # Chave da API da Anthropic (https://console.anthropic.com)
-  api_key: "TODO: sk-ant-..."
-  model: "claude-opus-4-6"
+  # Chave da API da Anthropic (https://platform.openai.com/api-keys)
+  api_key: "TODO: sk-..."
+  model: "gpt-4o-mini"
   # Aspectos visuais que a IA deve verificar:
   visual_checks:
     - "elementos sobrepostos ou cortados"

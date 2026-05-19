@@ -1,10 +1,12 @@
 """
-ai_analyzer.py - Analise visual de screenshots usando Claude API
+ai_analyzer.py - Analise visual de screenshots usando OpenAI GPT-4o mini
 Funcoes: analyze_screenshot, compare_viewports, format_issues_for_report
 Instrucoes customizadas do QA Panel: utils/ai_custom.py
 """
 import base64
-import anthropic
+import json
+import re
+from openai import OpenAI
 from pathlib import Path
 
 
@@ -12,10 +14,21 @@ def _encode_image(image_path):
     return base64.standard_b64encode(Path(image_path).read_bytes()).decode("utf-8")
 
 
+def _make_client(api_key):
+    return OpenAI(api_key=api_key)
+
+
+def _parse_json(raw):
+    m = re.search(r'\{.*\}', raw, re.DOTALL)
+    if m:
+        return json.loads(m.group())
+    return None
+
+
 def analyze_screenshot(image_path, page_name, config, extra_context=""):
     ai_cfg  = config.get("ai", {})
     api_key = ai_cfg.get("api_key", "")
-    model   = ai_cfg.get("model", "claude-opus-4-6")
+    model   = ai_cfg.get("model", "gpt-4o-mini")
     checks  = ai_cfg.get("visual_checks", [])
 
     if not api_key or api_key.startswith("TODO"):
@@ -26,85 +39,91 @@ def analyze_screenshot(image_path, page_name, config, extra_context=""):
             "issues":  [],
         }
 
-    checks_text = "\n".join(f"  - {c}" for c in checks) if checks else \
+    checks_text = "\n".join("  - " + c for c in checks) if checks else \
         "  - bugs visuais gerais\n  - elementos quebrados\n  - layout inconsistente"
 
-    ctx = f"Contexto: {extra_context}\n\n" if extra_context else ""
+    ctx = ("Contexto: " + extra_context + "\n\n") if extra_context else ""
     prompt = (
-        f"Voce e especialista em QA visual de apps web.\n"
-        f"Analise o screenshot da pagina '{page_name}' (React/Next.js).\n\n"
-        f"{ctx}"
-        f"Verifique:\n{checks_text}\n\n"
-        f"Responda APENAS em JSON puro:\n"
-        f'{{"status":"PASS|WARN|FAIL","summary":"1 linha",'
-        f'"issues":[{{"severity":"alto|medio|baixo","description":"...","location":"..."}}],'
-        f'"details":"analise completa"}}\n\n'
-        f"PASS=sem problemas, WARN=pequenos problemas, FAIL=problemas serios."
+        "Voce e especialista em QA visual de apps web.\n"
+        "Analise o screenshot da pagina '" + page_name + "' (React/Next.js).\n\n"
+        + ctx +
+        "Verifique:\n" + checks_text + "\n\n"
+        "Responda APENAS em JSON puro:\n"
+        '{"status":"PASS|WARN|FAIL","summary":"1 linha",'
+        '"issues":[{"severity":"alto|medio|baixo","description":"...","location":"..."}],'
+        '"details":"analise completa"}\n\n'
+        "PASS=sem problemas, WARN=pequenos problemas, FAIL=problemas serios."
     )
 
     try:
-        client  = anthropic.Anthropic(api_key=api_key)
+        client  = _make_client(api_key)
         img_b64 = _encode_image(image_path)
         ext     = Path(image_path).suffix.lower().replace(".", "")
-        media   = f"image/{ext if ext in ('png','jpg','jpeg','gif','webp') else 'png'}"
+        media   = "image/" + (ext if ext in ("png", "jpg", "jpeg", "gif", "webp") else "png")
 
-        msg = client.messages.create(
-            model=model, max_tokens=1024,
+        response = client.chat.completions.create(
+            model=model,
+            max_tokens=1024,
             messages=[{"role": "user", "content": [
-                {"type": "image", "source": {"type": "base64", "media_type": media, "data": img_b64}},
-                {"type": "text",  "text": prompt},
+                {"type": "image_url", "image_url": {"url": "data:" + media + ";base64," + img_b64}},
+                {"type": "text", "text": prompt},
             ]}],
         )
-        raw = msg.content[0].text.strip()
-        import json, re
-        m = re.search(r'\{.*\}', raw, re.DOTALL)
-        if m:
-            r = json.loads(m.group())
-            return {"status": r.get("status","WARN"), "summary": r.get("summary",""),
-                    "details": r.get("details",""), "issues": r.get("issues",[])}
+        raw = response.choices[0].message.content.strip()
+        parsed = _parse_json(raw)
+        if parsed:
+            return {
+                "status":  parsed.get("status", "WARN"),
+                "summary": parsed.get("summary", ""),
+                "details": parsed.get("details", ""),
+                "issues":  parsed.get("issues", []),
+            }
         return {"status": "WARN", "summary": "Formato inesperado", "details": raw, "issues": []}
 
     except Exception as e:
-        return {"status": "WARN", "summary": f"Erro API: {type(e).__name__}",
+        return {"status": "WARN", "summary": "Erro API: " + type(e).__name__,
                 "details": str(e), "issues": []}
 
 
 def compare_viewports(desktop_path, mobile_path, page_name, config):
     ai_cfg  = config.get("ai", {})
     api_key = ai_cfg.get("api_key", "")
-    model   = ai_cfg.get("model", "claude-opus-4-6")
+    model   = ai_cfg.get("model", "gpt-4o-mini")
 
     if not api_key or api_key.startswith("TODO"):
         return {"status": "WARN", "summary": "API key nao configurada", "details": "", "issues": []}
 
     prompt = (
-        f"Compare os screenshots da pagina '{page_name}': 1a=desktop(1280px), 2a=mobile(375px).\n"
-        f"Verifique: layout adaptado, elementos cortados, menu mobile, legibilidade, tamanho botoes.\n"
-        f"JSON puro: {{\"status\":\"PASS|WARN|FAIL\",\"summary\":\"1 linha\","
-        f"\"issues\":[{{\"severity\":\"alto|medio|baixo\",\"description\":\"...\",\"location\":\"...\"}}],"
-        f"\"details\":\"analise comparativa\"}}"
+        "Compare os screenshots da pagina '" + page_name + "': 1a imagem=desktop(1280px), 2a imagem=mobile(375px).\n"
+        "Verifique: layout adaptado, elementos cortados, menu mobile, legibilidade, tamanho botoes.\n"
+        'JSON puro: {"status":"PASS|WARN|FAIL","summary":"1 linha",'
+        '"issues":[{"severity":"alto|medio|baixo","description":"...","location":"..."}],'
+        '"details":"analise comparativa"}'
     )
 
     def enc(p):
         return base64.standard_b64encode(Path(p).read_bytes()).decode("utf-8")
 
     try:
-        client = anthropic.Anthropic(api_key=api_key)
-        msg = client.messages.create(
-            model=model, max_tokens=1024,
+        client = _make_client(api_key)
+        response = client.chat.completions.create(
+            model=model,
+            max_tokens=1024,
             messages=[{"role": "user", "content": [
-                {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": enc(desktop_path)}},
-                {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": enc(mobile_path)}},
-                {"type": "text",  "text": prompt},
+                {"type": "image_url", "image_url": {"url": "data:image/png;base64," + enc(desktop_path)}},
+                {"type": "image_url", "image_url": {"url": "data:image/png;base64," + enc(mobile_path)}},
+                {"type": "text", "text": prompt},
             ]}],
         )
-        raw = msg.content[0].text.strip()
-        import json, re
-        m = re.search(r'\{.*\}', raw, re.DOTALL)
-        if m:
-            r = json.loads(m.group())
-            return {"status": r.get("status","WARN"), "summary": r.get("summary",""),
-                    "details": r.get("details",""), "issues": r.get("issues",[])}
+        raw = response.choices[0].message.content.strip()
+        parsed = _parse_json(raw)
+        if parsed:
+            return {
+                "status":  parsed.get("status", "WARN"),
+                "summary": parsed.get("summary", ""),
+                "details": parsed.get("details", ""),
+                "issues":  parsed.get("issues", []),
+            }
         return {"status": "WARN", "summary": "Formato inesperado", "details": raw, "issues": []}
 
     except Exception as e:
@@ -121,10 +140,11 @@ def format_issues_for_report(analysis):
             sev   = issue.get("severity", "?").upper()
             desc  = issue.get("description", "")
             loc   = issue.get("location", "")
-            color = {"ALTO": "#dc2626", "MEDIO": "#d97706", "BAIXO": "#16a34a"}.get(sev, "#64748b")
-            loc_html = f" <em>({loc})</em>" if loc else ""
+            colors = {"ALTO": "#dc2626", "MEDIO": "#d97706", "BAIXO": "#16a34a"}
+            color = colors.get(sev, "#64748b")
+            loc_html = " <em>(" + loc + ")</em>" if loc else ""
             lines.append(
-                f'<li><span style="color:{color};font-weight:700">[{sev}]</span> {desc}{loc_html}</li>'
+                '<li><span style="color:' + color + ';font-weight:700">[' + sev + ']</span> ' + desc + loc_html + '</li>'
             )
         lines.append("</ul>")
     return "".join(lines)
