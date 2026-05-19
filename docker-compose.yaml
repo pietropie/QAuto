@@ -1,22 +1,9 @@
-# ── docker-compose.yml ─────────────────────────────────────
-# Servicos:
-#   redis   — banco de dados em memoria
-#   api     — FastAPI: painel web + REST API
-#   worker  — consumidor da fila (roda os testes Playwright)
-#
+# docker-compose.yaml
 # Deploy no Coolify:
-#   1. Suba este repo no seu Git (GitHub, GitLab etc.)
-#   2. No Coolify: New Resource > Docker Compose
-#   3. Aponte para o repositorio
-#   4. Configure as variaveis de ambiente em Environment Variables
-#   5. Coolify cuida do dominio e SSL automaticamente
-#
-# Variaveis de ambiente obrigatorias (configure no Coolify):
-#   APP_BASE_URL       - URL da aplicacao a testar (ex: https://app.suaempresa.com)
-#   APP_USERNAME       - usuario de teste
-#   APP_PASSWORD       - senha de teste
-#   ANTHROPIC_API_KEY  - chave da API Claude para analise visual
-# ─────────────────────────────────────────────────────────────
+#   1. New Resource > Docker Compose > aponte para este repo
+#   2. Configure as variaveis em Environment Variables:
+#      APP_BASE_URL, APP_USERNAME, APP_PASSWORD, OPENAI_API_KEY
+#   3. Coolify cuida do dominio e SSL automaticamente
 
 services:
 
@@ -42,13 +29,12 @@ services:
       - APP_BASE_URL=${APP_BASE_URL}
       - APP_USERNAME=${APP_USERNAME}
       - APP_PASSWORD=${APP_PASSWORD}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ENV=${ENV:-production}
       - PORT=8000
     volumes:
-      - ./reports:/app/reports
-      - ./screenshots:/app/screenshots
-      - ./config.yaml:/app/config.yaml:ro
+      - reports_data:/app/reports
+      - screenshots_data:/app/screenshots
     depends_on:
       redis:
         condition: service_healthy
@@ -67,19 +53,19 @@ services:
       - APP_BASE_URL=${APP_BASE_URL}
       - APP_USERNAME=${APP_USERNAME}
       - APP_PASSWORD=${APP_PASSWORD}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
-      - ./reports:/app/reports
-      - ./screenshots:/app/screenshots
-      - ./config.yaml:/app/config.yaml:ro
+      - reports_data:/app/reports
+      - screenshots_data:/app/screenshots
     depends_on:
       redis:
         condition: service_healthy
       api:
         condition: service_healthy
     command: ["python", "worker.py"]
-    # Permite rodar Chromium headless dentro do container
     shm_size: '2gb'
 
 volumes:
   redis_data:
+  reports_data:
+  screenshots_data:
