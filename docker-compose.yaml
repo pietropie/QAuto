@@ -2,7 +2,7 @@
 
 services:
 
-  redis:
+  qauto-redis:
     image: redis:7-alpine
     restart: always
     volumes:
@@ -16,13 +16,13 @@ services:
     networks:
       - default
 
-  api:
+  qauto-api:
     build: .
     restart: always
     expose:
       - "8000"
     environment:
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://qauto-redis:6379/0
       - APP_BASE_URL=${APP_BASE_URL}
       - APP_USERNAME=${APP_USERNAME}
       - APP_PASSWORD=${APP_PASSWORD}
@@ -33,7 +33,7 @@ services:
       - reports_data:/app/reports
       - screenshots_data:/app/screenshots
     depends_on:
-      redis:
+      qauto-redis:
         condition: service_healthy
     command: ["python", "api.py"]
     healthcheck:
@@ -44,16 +44,16 @@ services:
       start_period: 30s
     labels:
       - "traefik.enable=true"
-      - "traefik.http.services.api.loadbalancer.server.port=8000"
+      - "traefik.http.services.qauto-api.loadbalancer.server.port=8000"
     networks:
       - default
       - coolify
 
-  worker:
+  qauto-worker:
     build: .
     restart: always
     environment:
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://qauto-redis:6379/0
       - APP_BASE_URL=${APP_BASE_URL}
       - APP_USERNAME=${APP_USERNAME}
       - APP_PASSWORD=${APP_PASSWORD}
@@ -62,9 +62,9 @@ services:
       - reports_data:/app/reports
       - screenshots_data:/app/screenshots
     depends_on:
-      redis:
+      qauto-redis:
         condition: service_healthy
-      api:
+      qauto-api:
         condition: service_started
     command: ["python", "worker.py"]
     shm_size: '2gb'
