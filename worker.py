@@ -173,7 +173,7 @@ def _update_ai_context(r, reporter: WorkerReporter, config: dict):
             max_tokens=800,
             messages=[{"role": "user", "content": prompt}],
         )
-        raw = msg.content[0].text.strip()
+        raw = msg.choices[0].message.content.strip()
         import re
         m = re.search(r'\{.*\}', raw, re.DOTALL)
         if m:
@@ -299,4 +299,22 @@ def main():
 
             job = dequeue_job(r, timeout=30)
             if job is None:
-                
+                backoff = 1
+                continue
+
+            print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Processando: {job.get('label', job.get('type'))}")
+            run_job(job, r)
+            backoff = 1
+
+        except KeyboardInterrupt:
+            print("\nWorker encerrado pelo usuario.")
+            break
+        except Exception as e:
+            print(f"\nERRO no worker: {e}")
+            traceback.print_exc()
+            time.sleep(backoff)
+            backoff = min(backoff * 2, 60)
+
+
+if __name__ == "__main__":
+    main()
