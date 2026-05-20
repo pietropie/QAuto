@@ -220,4 +220,4 @@ async def sse_events():
 
 if __name__ == "__main__":
     import uvicorn
-    uvico
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
