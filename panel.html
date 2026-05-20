@@ -473,6 +473,41 @@ function doLogout() {
   showLogin();
 }
 
+function showChangePassword() {
+  const m = document.getElementById('change-pw-modal');
+  m.style.display = 'flex';
+  document.getElementById('pw-old').value = '';
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-confirm').value = '';
+  document.getElementById('pw-msg').textContent = '';
+}
+
+function hideChangePassword() {
+  document.getElementById('change-pw-modal').style.display = 'none';
+}
+
+async function doChangePassword() {
+  const old_pw = document.getElementById('pw-old').value.trim();
+  const new_pw = document.getElementById('pw-new').value.trim();
+  const confirm_pw = document.getElementById('pw-confirm').value.trim();
+  const errEl = document.getElementById('pw-msg');
+  errEl.textContent = '';
+  if (!old_pw || !new_pw || !confirm_pw) { errEl.textContent = 'Preencha todos os campos.'; return; }
+  if (new_pw !== confirm_pw) { errEl.textContent = 'As senhas não coincidem.'; return; }
+  if (new_pw.length < 6) { errEl.textContent = 'Mínimo 6 caracteres.'; return; }
+  try {
+    const r = await apiFetch('/auth/password', {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({old_password: old_pw, new_password: new_pw}),
+    });
+    const d = await r.json();
+    if (!r.ok) { errEl.textContent = d.detail || 'Erro ao alterar senha.'; return; }
+    hideChangePassword();
+    alert('Senha alterada com sucesso!');
+  } catch(e) { errEl.textContent = 'Erro de conexão: ' + e.message; }
+}
+
 async function tryAutoLogin() {
   if (!getToken()) return false;
   try {
