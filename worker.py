@@ -224,7 +224,7 @@ def run_job(job: dict, r):
         user_apps = get_user_apps(r, user_email)
         app = next((a for a in user_apps if a.get("id") == app_id), None)
         if app:
-            config.setdefault("app", {})["base_url"] = app.get("base_url", "")
+            config.setdefault("app", {})["base_url"] = app.get("base_url") or app.get("url", "")
             login_cfg = config["app"].setdefault("login", {})
             login_cfg["enabled"]           = app.get("login_enabled", False)
             login_cfg["url_path"]          = app.get("login_url", "/login")
