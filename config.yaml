@@ -9,6 +9,7 @@ app:
 
   # Credenciais de login
   login:
+    enabled: true              # false = pula o login (app sem autenticação)
     url_path: "/login"          # caminho da página de login
     username_selector: "input[name='email']"   # seletor do campo de email/usuário
     password_selector: "input[name='password']" # seletor do campo de senha

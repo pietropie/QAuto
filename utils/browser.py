@@ -29,16 +29,22 @@ def create_browser(config: dict):
 def login(page: Page, config: dict) -> bool:
     """
     Realiza login na aplicação.
-    Retorna True se bem-sucedido, False caso contrário.
+    Retorna True se bem-sucedido ou se login estiver desativado.
+    Para desativar, defina login.enabled: false no config.yaml.
     """
-    login_cfg = config["app"]["login"]
+    login_cfg = config.get("app", {}).get("login", {})
+
+    if not login_cfg.get("enabled", True):
+        print("  [INFO] Login desativado (login.enabled: false) — pulando etapa.")
+        return True
+
     base_url  = config["app"]["base_url"].rstrip("/")
     login_url = base_url + login_cfg.get("url_path", "/login")
 
     try:
         page.goto(login_url, wait_until="networkidle")
-        page.fill(login_cfg["username_selector"], login_cfg["username"])
-        page.fill(login_cfg["password_selector"], login_cfg["password"])
+        page.fill(login_cfg["username_selector"], login_cfg.get("username", ""))
+        page.fill(login_cfg["password_selector"], login_cfg.get("password", ""))
         page.click(login_cfg["submit_selector"])
         page.wait_for_load_state("networkidle")
 
