@@ -283,29 +283,21 @@ input[type="checkbox"]{width:16px;height:16px;accent-color:var(--primary)}
         <select id="queue-app"><option value="">— Selecione uma aplicação —</option></select>
       </div>
       <div class="form-group"><label>Tipo de run</label>
-        <select id="queue-type">
-          <option value="full">🔁 Run Completo</option>
-          <option value="custom">🎯 Só instruções personalizadas</option>
-          <option value="visual">🎨 Só visual (IA)</option>
-          <option value="navegacao">🧭 Só navegação</option>
-          <option value="formularios">📋 Só formulários</option>
-          <option value="pedidos">🛒 Só pedidos</option>
+        <select id="queue-type" onchange="updateQueueDynamic()">
+          <option value="custom">🎯 Instruções personalizadas</option>
+          <option value="produto">📦 Produto</option>
+          <option value="pagina">📄 Página específica</option>
+          <option value="full">🔁 Completo</option>
         </select>
       </div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label>Rótulo</label>
-        <input type="text" id="queue-label" placeholder="Ex: Teste após deploy v2.4">
-      </div>
-      <div class="form-group">
-        <label>Produto / Grupo <span style="color:var(--muted)">(opcional)</span></label>
-        <select id="queue-product">
-          <option value="all">🔁 Todos os produtos</option>
-        </select>
-        <p class="hint">Filtra quais páginas de instruções serão testadas.</p>
-      </div>
+    <div class="form-group">
+      <label>Rótulo <span style="color:var(--muted)">(opcional)</span></label>
+      <input type="text" id="queue-label" placeholder="Ex: Teste após deploy v2.4">
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <!-- Campos dinâmicos por tipo de run -->
+    <div id="queue-dynamic" style="margin-top:8px"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
       <button class="btn btn-success" onclick="enqueueFromForm()">+ Enfileirar</button>
       <button class="btn btn-danger btn-sm" onclick="clearQueue()">🗑 Limpar fila</button>
     </div>
@@ -522,6 +514,7 @@ async function onLoggedIn() {
   document.getElementById('user-name').textContent  = currentUser.name  || '';
   document.getElementById('user-email').textContent = currentUser.email || '';
   await Promise.all([loadInstructions(), loadApps(), loadQueue(), loadAiConfig()]);
+  updateQueueDynamic();
   checkConn();
   startSSE();
 }
@@ -680,14 +673,8 @@ function updateProductDropdowns() {
   // update datalist
   const dl = document.getElementById('produtos-list');
   if (dl) dl.innerHTML = getUniqueProducts().map(p=>`<option value="${esc(p)}">`).join('');
-  // update queue product filter
-  const sel = document.getElementById('queue-product');
-  if (sel) {
-    const cur = sel.value;
-    sel.innerHTML = '<option value="all">🔁 Todos os produtos</option>' +
-      getUniqueProducts().map(p=>`<option value="${esc(p)}">📦 ${esc(p)}</option>`).join('');
-    if (cur && [...sel.options].some(o=>o.value===cur)) sel.value=cur;
-  }
+  // update queue dynamic panel if visible
+  updateQueueDynamic();
 }
 
 function renderPaginas() {
@@ -942,23 +929,111 @@ async function loadQueue() {
   } catch {}
 }
 
-async function enqueueRun(type, label, product_filter='all') {
+// ── Campos dinâmicos da fila ──────────────────────────────────────────
+function updateQueueDynamic() {
+  const type = document.getElementById('queue-type').value;
+  const el   = document.getElementById('queue-dynamic');
+  if (!el) return;
+
+  const products = getUniqueProducts();
+  const productOptions = products.map(p=>`<option value="${esc(p)}">📦 ${esc(p)}</option>`).join('');
+
+  if (type === 'custom') {
+    el.innerHTML = `
+      <div class="form-group">
+        <label>Instrução específica</label>
+        <textarea id="queue-instruction" rows="3" style="width:100%;resize:vertical;border:1px solid var(--border);border-radius:6px;padding:8px;background:var(--surface);color:var(--text);font-size:.9rem" placeholder="Descreva o que a IA deve testar. Ex: Verifique se o botão de checkout abre o modal de pagamento."></textarea>
+        <p class="hint">A IA seguirá essa instrução e reportará o resultado.</p>
+      </div>`;
+  } else if (type === 'produto') {
+    el.innerHTML = `
+      <div class="form-group">
+        <label>Produto</label>
+        <select id="queue-produto-sel">
+          <option value="all">🔁 Todos os produtos</option>
+          ${productOptions}
+        </select>
+        <p class="hint">A IA percorrerá todas as páginas e fluxos desse produto.</p>
+      </div>`;
+  } else if (type === 'pagina') {
+    el.innerHTML = `
+      <div class="form-row">
+        <div class="form-group">
+          <label>Produto</label>
+          <select id="queue-pagina-produto" onchange="updateQueuePageDropdown()">
+            <option value="">— Todos —</option>
+            ${productOptions}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Página</label>
+          <select id="queue-pagina-page">
+            <option value="">— Selecione —</option>
+          </select>
+        </div>
+      </div>
+      <p class="hint">A IA validará somente essa página.</p>`;
+    updateQueuePageDropdown();
+  } else {
+    // full
+    el.innerHTML = '<p class="hint">Todas as páginas e fluxos serão testados.</p>';
+  }
+}
+
+function updateQueuePageDropdown() {
+  const prodSel = document.getElementById('queue-pagina-produto');
+  const pageSel = document.getElementById('queue-pagina-page');
+  if (!prodSel || !pageSel) return;
+  const prodFilter = prodSel.value;
+  const pages = (state.pages || []).filter(p => !prodFilter || (p.produto||'') === prodFilter);
+  pageSel.innerHTML = '<option value="">— Selecione —</option>' +
+    pages.map(p=>`<option value="${esc(p.path||p.name)}">${esc(p.name)}${p.path?' ('+esc(p.path)+')':''}</option>`).join('');
+}
+
+async function enqueueRun(type, label, extras={}) {
   const app_id = document.getElementById('queue-app')?.value || '';
   try {
     await saveInstructions();
-    const r = await apiFetch('/api/queue', { method:'POST', body:JSON.stringify({type, label, app_id, product_filter}) });
+    const body = { type, label, app_id, ...extras };
+    const r = await apiFetch('/api/queue', { method:'POST', body:JSON.stringify(body) });
     if (r&&r.ok) { toast('⏳ Job enfileirado!'); loadQueue(); }
     else toast('Erro ao enfileirar');
   } catch(e) { toast('Erro: '+e.message); }
 }
 
 function enqueueFromForm() {
-  const type           = document.getElementById('queue-type').value;
-  const label          = document.getElementById('queue-label').value.trim() || 'Run agendado';
-  const app_id         = document.getElementById('queue-app').value;
-  const product_filter = document.getElementById('queue-product').value;
+  const type  = document.getElementById('queue-type').value;
+  const label = document.getElementById('queue-label').value.trim();
+  const app_id = document.getElementById('queue-app')?.value || '';
   if (!app_id) { toast('Selecione uma aplicação primeiro'); switchTab('apps'); return; }
-  enqueueRun(type, label, product_filter);
+
+  const extras = {};
+
+  if (type === 'custom') {
+    const instruction = (document.getElementById('queue-instruction')?.value || '').trim();
+    if (!instruction) { toast('Digite a instrução específica'); return; }
+    extras.instruction_text = instruction;
+    enqueueRun('custom', label || 'Instruções personalizadas', extras);
+
+  } else if (type === 'produto') {
+    const produto = document.getElementById('queue-produto-sel')?.value || 'all';
+    extras.produto = produto;
+    extras.product_filter = produto;
+    const prodName = produto === 'all' ? 'Todos os produtos' : produto;
+    enqueueRun('produto', label || `Produto: ${prodName}`, extras);
+
+  } else if (type === 'pagina') {
+    const page_name = document.getElementById('queue-pagina-page')?.value || '';
+    const produto   = document.getElementById('queue-pagina-produto')?.value || '';
+    if (!page_name) { toast('Selecione uma página'); return; }
+    extras.page_name = page_name;
+    if (produto) extras.produto = produto;
+    enqueueRun('pagina', label || `Página: ${page_name}`, extras);
+
+  } else {
+    // full
+    enqueueRun('full', label || 'Run completo', extras);
+  }
 }
 
 async function clearQueue() {

@@ -116,6 +116,10 @@ class QueueJobPayload(BaseModel):
     product_filter:  str  = "all"
     app_id:          Optional[str] = None
     config_override: dict = {}
+    # New semantic run type fields
+    produto:          Optional[str] = None   # for type=produto or type=pagina
+    page_name:        Optional[str] = None   # for type=pagina (specific page path/name)
+    instruction_text: Optional[str] = None   # for type=custom (specific instruction)
 
 
 class AppPayload(BaseModel):
@@ -346,6 +350,10 @@ async def add_to_queue(payload: QueueJobPayload, token: str = Depends(oauth2_sch
         "config_override": payload.config_override,
         "user_email":      user_email,
         "queued_at":       time.time(),
+        # Semantic run type extras
+        "produto":          payload.produto,
+        "page_name":        payload.page_name,
+        "instruction_text": payload.instruction_text,
     }
     enqueue_job(r, job)
     return {"ok": True, "queue_length": queue_length(r)}

@@ -266,16 +266,54 @@ def run_job(job: dict, r):
     else:
         redis_instructions = load_instructions(r)
 
-    # Aplica filtro de produto nas paginas, se solicitado
-    product_filter = job.get("product_filter", "all")
-    if product_filter and product_filter != "all":
+    # ── Resolve tipo de run e aplica filtros nas instruções ──────────────
+    job_type         = job.get("type", "full")
+    produto          = job.get("produto")            # para tipo produto/pagina
+    page_name        = job.get("page_name")          # para tipo pagina
+    instruction_text = job.get("instruction_text")   # para tipo custom
+
+    # Filtra páginas por produto (para tipo produto ou pagina)
+    if produto and produto != "all":
         paginas = redis_instructions.get("pages", [])
         redis_instructions["pages"] = [
             pg for pg in paginas
-            if pg.get("produto", "").strip().lower() == product_filter.strip().lower()
+            if pg.get("produto", "").strip().lower() == produto.strip().lower()
         ]
-        print(f"  [INFO] Filtro de produto '{product_filter}': "
+        print(f"  [INFO] Filtro de produto '{produto}': "
               f"{len(redis_instructions['pages'])} pagina(s) selecionada(s)")
+    elif job_type not in ("produto", "pagina"):
+        # Compatibilidade com product_filter legado
+        product_filter = job.get("product_filter", "all")
+        if product_filter and product_filter != "all":
+            paginas = redis_instructions.get("pages", [])
+            redis_instructions["pages"] = [
+                pg for pg in paginas
+                if pg.get("produto", "").strip().lower() == product_filter.strip().lower()
+            ]
+
+    # Filtra para página específica (tipo pagina)
+    if job_type == "pagina" and page_name:
+        paginas = redis_instructions.get("pages", [])
+        matched = [
+            pg for pg in paginas
+            if pg.get("path", "").strip().lower() == page_name.strip().lower()
+            or pg.get("name", "").strip().lower() == page_name.strip().lower()
+        ]
+        if matched:
+            redis_instructions["pages"] = matched
+            print(f"  [INFO] Página específica '{page_name}': encontrada")
+        else:
+            # Cria uma página ad-hoc para testar
+            redis_instructions["pages"] = [{"name": page_name, "path": page_name, "instructions": "Valide todos os elementos desta página."}]
+            print(f"  [INFO] Página '{page_name}' não encontrada nas instruções, criada ad-hoc")
+
+    # Injeta instrução personalizada no config (tipo custom)
+    if job_type == "custom" and instruction_text:
+        config["_custom_instruction"] = instruction_text
+        # Cria uma página temporária com a instrução para test_custom processar
+        redis_instructions["general"] = redis_instructions.get("general", [])
+        redis_instructions["general"].insert(0, instruction_text)
+        print(f"  [INFO] Instrução personalizada injetada: {instruction_text[:80]}")
 
     if any(redis_instructions.values()):
         config["_redis_instructions"] = redis_instructions
@@ -287,11 +325,11 @@ def run_job(job: dict, r):
             "type":      "started",
             "run_id":    run_id,
             "label":     job.get("label", "Run"),
-            "job_type":  job.get("type", "full"),
+            "job_type":  job_type,
             "started_at": time.time(),
         })
 
-        job_type = job.get("type", "full")
+        # ── Monta lista de suites a executar por tipo ──────────────────────
         suite_map = {
             "navegacao":   ("Navegacao",   lambda p, ctx: test_navigation.run(p, config, reporter)),
             "formularios": ("Formularios", lambda p, ctx: test_forms.run(p, config, reporter)),
@@ -299,7 +337,21 @@ def run_job(job: dict, r):
             "visual":      ("Visual IA",   lambda p, ctx: test_visual.run(p, ctx, config, reporter)),
             "custom":      ("Instrucoes",  lambda p, ctx: test_custom.run(p, config, reporter)),
         }
-        suites_to_run = list(suite_map.keys()) if job_type == "full" else [job_type]
+
+        if job_type == "full":
+            # Completo: todas as suites
+            suites_to_run = list(suite_map.keys())
+        elif job_type in ("produto", "pagina"):
+            # Produto ou página específica: usa a suite custom (que testa páginas com IA)
+            suites_to_run = ["custom"]
+        elif job_type == "custom":
+            # Instrução personalizada: só a suite custom
+            suites_to_run = ["custom"]
+        elif job_type in suite_map:
+            # Compatibilidade com tipos legados (navegacao, formularios, etc.)
+            suites_to_run = [job_type]
+        else:
+            suites_to_run = ["custom"]
 
         print(f"\n{'='*50}")
         print(f"  Job: {job.get('label')} | Suites: {suites_to_run}")
