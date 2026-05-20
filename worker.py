@@ -43,15 +43,21 @@ from utils.context_store import (
 
 
 def load_config(path: str = "config.yaml") -> dict:
-    with open(path, encoding="utf-8") as f:
-        cfg = yaml.safe_load(f)
+    cfg = {}
+    try:
+        with open(path, encoding="utf-8") as f:
+            cfg = yaml.safe_load(f) or {}
+    except FileNotFoundError:
+        print(f"  [WARN] {path} nao encontrado — usando config vazia")
+    except Exception as e:
+        print(f"  [WARN] Erro ao ler {path}: {e} — usando config vazia")
     # Permite override de variaveis de ambiente
     if os.getenv("APP_BASE_URL"):
         cfg.setdefault("app", {})["base_url"] = os.getenv("APP_BASE_URL")
     if os.getenv("APP_USERNAME"):
         cfg.setdefault("app", {}).setdefault("login", {})["username"] = os.getenv("APP_USERNAME")
     if os.getenv("APP_PASSWORD"):
-        cfg["app"]["login"]["password"] = os.getenv("APP_PASSWORD")
+        cfg.setdefault("app", {}).setdefault("login", {})["password"] = os.getenv("APP_PASSWORD")
     if os.getenv("OPENAI_API_KEY"):
         cfg.setdefault("ai", {})["api_key"] = os.getenv("OPENAI_API_KEY")
     return cfg
@@ -190,14 +196,27 @@ def _update_ai_context(r, reporter: WorkerReporter, config: dict):
 
 def run_job(job: dict, r):
     """Executa um job da fila."""
-    from utils.browser import create_browser, login
-    from tests import test_navigation, test_forms, test_orders, test_visual, test_custom
-
-    run_id  = f"run_{int(time.time())}"
-    _started = False
-    config  = load_config()
-    config["_job_label"] = job.get("label", "Run")
+    run_id = f"run_{int(time.time())}"
     user_email = job.get("user_email")
+    reporter = None
+
+    def _save_critical_error(err_msg: str):
+        try:
+            r.set("qa:worker:last_error", json.dumps({
+                "error": err_msg, "run_id": run_id, "ts": time.time(), "job": str(job)[:200]
+            }))
+        except Exception:
+            pass
+
+    try:
+        from utils.browser import create_browser, login
+        from tests import test_navigation, test_forms, test_orders, test_visual, test_custom
+    except Exception as e:
+        _save_critical_error(f"ImportError: {e}")
+        raise
+
+    config = load_config()
+    config["_job_label"] = job.get("label", "Run")
 
     # Carrega app do Redis se app_id estiver definido no job
     app_id = job.get("app_id")
@@ -207,17 +226,17 @@ def run_job(job: dict, r):
         if app:
             config.setdefault("app", {})["base_url"] = app.get("base_url", "")
             login_cfg = config["app"].setdefault("login", {})
-            login_cfg["enabled"]            = app.get("login_enabled", False)
-            login_cfg["url_path"]           = app.get("login_url", "/login")
-            login_cfg["username"]           = app.get("username", "")
-            login_cfg["password"]           = app.get("password", "")
-            login_cfg["username_selector"]  = app.get("username_selector", "input[name='email']")
-            login_cfg["password_selector"]  = app.get("password_selector", "input[name='password']")
-            login_cfg["submit_selector"]    = app.get("submit_selector", "button[type='submit']")
-            login_cfg["success_indicator"]  = app.get("success_indicator", "")
+            login_cfg["enabled"]           = app.get("login_enabled", False)
+            login_cfg["url_path"]          = app.get("login_url", "/login")
+            login_cfg["username"]          = app.get("username", "")
+            login_cfg["password"]          = app.get("password", "")
+            login_cfg["username_selector"] = app.get("username_selector", "input[name='email']")
+            login_cfg["password_selector"] = app.get("password_selector", "input[name='password']")
+            login_cfg["submit_selector"]   = app.get("submit_selector", "button[type='submit']")
+            login_cfg["success_indicator"] = app.get("success_indicator", "")
             print(f"  [INFO] App carregado do Redis: {app.get('name')} -> {app.get('base_url')}")
         else:
-            print(f"  [WARN] app_id {app_id} não encontrado para {user_email}")
+            print(f"  [WARN] app_id {app_id} nao encontrado para {user_email}")
 
     # Carrega config de IA do usuario no Redis
     if user_email:
@@ -247,7 +266,7 @@ def run_job(job: dict, r):
     else:
         redis_instructions = load_instructions(r)
 
-    # Aplica filtro de produto nas páginas, se solicitado
+    # Aplica filtro de produto nas paginas, se solicitado
     product_filter = job.get("product_filter", "all")
     if product_filter and product_filter != "all":
         paginas = redis_instructions.get("pages", [])
@@ -256,77 +275,80 @@ def run_job(job: dict, r):
             if pg.get("produto", "").strip().lower() == product_filter.strip().lower()
         ]
         print(f"  [INFO] Filtro de produto '{product_filter}': "
-              f"{len(redis_instructions['pages'])} página(s) selecionada(s)")
+              f"{len(redis_instructions['pages'])} pagina(s) selecionada(s)")
 
     if any(redis_instructions.values()):
         config["_redis_instructions"] = redis_instructions
 
     reporter = WorkerReporter(run_id, r, config)
 
-    _started = True
-    set_run_status(r, {
-        "type":    "started",
-        "run_id":  run_id,
-        "label":   job.get("label", "Run"),
-        "job_type": job.get("type", "full"),
-        "started_at": time.time(),
-    })
-
-    job_type = job.get("type", "full")
-    suite_map = {
-        "navegacao":   ("Navegacao",   lambda p, ctx: test_navigation.run(p, config, reporter)),
-        "formularios": ("Formularios", lambda p, ctx: test_forms.run(p, config, reporter)),
-        "pedidos":     ("Pedidos",     lambda p, ctx: test_orders.run(p, config, reporter)),
-        "visual":      ("Visual IA",   lambda p, ctx: test_visual.run(p, ctx, config, reporter)),
-        "custom":      ("Instrucoes",  lambda p, ctx: test_custom.run(p, config, reporter)),
-    }
-    suites_to_run = list(suite_map.keys()) if job_type == "full" else [job_type]
-
-    print(f"\n{'='*50}")
-    print(f"  Job: {job.get('label')} | Suites: {suites_to_run}")
-    print(f"  Run ID: {run_id}")
-    print(f"{'='*50}")
-
     try:
-        pw, browser, context = create_browser(config)
-        page = context.new_page()
-        try:
-            login(page, config)
-            for key in suites_to_run:
-                if key not in suite_map:
-                    continue
-                name, fn = suite_map[key]
-                print(f"\n  >> Suite: {name}")
-                try:
-                    fn(page, context)
-                except Exception as e:
-                    print(f"  ERRO critico na suite {name}: {e}")
-                    traceback.print_exc()
-        finally:
-            context.close()
-            browser.close()
-            pw.stop()
-    except Exception as e:
-        print(f"  [ERRO] Falha ao iniciar browser ou executar testes: {e}")
-        traceback.print_exc()
-        # Registra erro no reporter para aparecer no historico
-        suite = reporter.add_suite("❌ Erro de Execução")
-        reporter.add_result(suite, "Inicializar browser", "FAIL", str(e))
-        # Salva no Redis para diagnostico
-        r.set("qa:worker:last_error", json.dumps({"error": str(e), "run_id": run_id, "ts": time.time()}))
+        set_run_status(r, {
+            "type":      "started",
+            "run_id":    run_id,
+            "label":     job.get("label", "Run"),
+            "job_type":  job.get("type", "full"),
+            "started_at": time.time(),
+        })
 
-    run_result = reporter.finish()
-    # Salva no historico global e por usuario
-    if user_email:
+        job_type = job.get("type", "full")
+        suite_map = {
+            "navegacao":   ("Navegacao",   lambda p, ctx: test_navigation.run(p, config, reporter)),
+            "formularios": ("Formularios", lambda p, ctx: test_forms.run(p, config, reporter)),
+            "pedidos":     ("Pedidos",     lambda p, ctx: test_orders.run(p, config, reporter)),
+            "visual":      ("Visual IA",   lambda p, ctx: test_visual.run(p, ctx, config, reporter)),
+            "custom":      ("Instrucoes",  lambda p, ctx: test_custom.run(p, config, reporter)),
+        }
+        suites_to_run = list(suite_map.keys()) if job_type == "full" else [job_type]
+
+        print(f"\n{'='*50}")
+        print(f"  Job: {job.get('label')} | Suites: {suites_to_run}")
+        print(f"  Run ID: {run_id}")
+        print(f"{'='*50}")
+
         try:
-            save_user_run_result(r, user_email, run_result)
+            pw, browser, context = create_browser(config)
+            page = context.new_page()
+            try:
+                login(page, config)
+                for key in suites_to_run:
+                    if key not in suite_map:
+                        continue
+                    name, fn = suite_map[key]
+                    print(f"\n  >> Suite: {name}")
+                    try:
+                        fn(page, context)
+                    except Exception as e:
+                        print(f"  ERRO critico na suite {name}: {e}")
+                        traceback.print_exc()
+            finally:
+                context.close()
+                browser.close()
+                pw.stop()
         except Exception as e:
-            print(f"  [WARN] Nao foi possivel salvar historico do usuario: {e}")
-    _update_ai_context(r, reporter, config)
-    clear_run_status(r)
+            print(f"  [ERRO] Falha ao iniciar browser ou executar testes: {e}")
+            traceback.print_exc()
+            suite = reporter.add_suite("Erro de Execucao")
+            reporter.add_result(suite, "Inicializar browser", "FAIL", str(e))
+            _save_critical_error(f"BrowserError: {e}")
 
-    print(f"\n  Finalizado: {run_result['passed']} OK / {run_result['failed']} falhas / {run_result['warned']} avisos")
-    return run_result
+    except Exception as e:
+        err_msg = f"Erro na execucao do job: {type(e).__name__}: {e}"
+        print(f"  [ERRO CRITICO] {err_msg}")
+        traceback.print_exc()
+        _save_critical_error(err_msg)
+    finally:
+        if reporter is not None:
+            run_result = reporter.finish()
+            if user_email:
+                try:
+                    save_user_run_result(r, user_email, run_result)
+                except Exception as ex:
+                    print(f"  [WARN] Nao foi possivel salvar historico do usuario: {ex}")
+            _update_ai_context(r, reporter, config)
+            print(f"\n  Finalizado: {run_result['passed']} OK / {run_result['failed']} falhas / {run_result['warned']} avisos")
+        clear_run_status(r)
+
 
 
 def main():
