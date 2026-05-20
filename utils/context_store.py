@@ -268,6 +268,15 @@ def get_user_history(r: redis.Redis, email: str, limit: int = 20) -> list:
     return [json.loads(i) for i in items]
 
 
+def save_user_run_result(r: redis.Redis, email: str, run: dict):
+    """Salva resultado de um run no historico por usuario."""
+    run.setdefault("id", str(int(time.time())))
+    score = run.get("started_at", time.time())
+    r.zadd(_uk(email, "history"), {json.dumps(run, ensure_ascii=False): score})
+    # Mantem apenas os ultimos 100 runs por usuario
+    r.zremrangebyrank(_uk(email, "history"), 0, -101)
+
+
 # --- Contexto acumulado por usuario ---
 
 def get_user_context(r: redis.Redis, email: str) -> dict:

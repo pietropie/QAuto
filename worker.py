@@ -35,6 +35,10 @@ from utils.context_store import (
     set_run_status,
     clear_run_status,
     queue_length,
+    get_user_apps,
+    get_user_ai_config,
+    load_user_instructions,
+    save_user_run_result,
 )
 
 
@@ -192,6 +196,34 @@ def run_job(job: dict, r):
     run_id  = f"run_{int(time.time())}"
     config  = load_config()
     config["_job_label"] = job.get("label", "Run")
+    user_email = job.get("user_email")
+
+    # Carrega app do Redis se app_id estiver definido no job
+    app_id = job.get("app_id")
+    if app_id and user_email:
+        user_apps = get_user_apps(r, user_email)
+        app = next((a for a in user_apps if a.get("id") == app_id), None)
+        if app:
+            config.setdefault("app", {})["base_url"] = app.get("base_url", "")
+            login_cfg = config["app"].setdefault("login", {})
+            login_cfg["enabled"]            = app.get("login_enabled", False)
+            login_cfg["url_path"]           = app.get("login_url", "/login")
+            login_cfg["username"]           = app.get("username", "")
+            login_cfg["password"]           = app.get("password", "")
+            login_cfg["username_selector"]  = app.get("username_selector", "input[name='email']")
+            login_cfg["password_selector"]  = app.get("password_selector", "input[name='password']")
+            login_cfg["submit_selector"]    = app.get("submit_selector", "button[type='submit']")
+            login_cfg["success_indicator"]  = app.get("success_indicator", "")
+            print(f"  [INFO] App carregado do Redis: {app.get('name')} -> {app.get('base_url')}")
+        else:
+            print(f"  [WARN] app_id {app_id} não encontrado para {user_email}")
+
+    # Carrega config de IA do usuario no Redis
+    if user_email:
+        ai_cfg = get_user_ai_config(r, user_email)
+        if ai_cfg.get("api_key") and not ai_cfg["api_key"].startswith("TODO"):
+            config.setdefault("ai", {}).update(ai_cfg)
+            print(f"  [INFO] Config IA carregada do Redis: provider={ai_cfg.get('provider')} model={ai_cfg.get('model')}")
 
     # Aplica overrides do job
     for k, v in job.get("config_override", {}).items():
@@ -206,8 +238,13 @@ def run_job(job: dict, r):
     if ctx_prompt:
         config.setdefault("ai", {})["accumulated_context"] = ctx_prompt
 
-    # Injeta instrucoes do painel (Redis sobrepoe YAML)
-    redis_instructions = load_instructions(r)
+    # Injeta instrucoes do painel (por usuario se disponivel, global como fallback)
+    if user_email:
+        redis_instructions = load_user_instructions(r, user_email)
+        if not any(redis_instructions.values()):
+            redis_instructions = load_instructions(r)
+    else:
+        redis_instructions = load_instructions(r)
 
     # Aplica filtro de produto nas páginas, se solicitado
     product_filter = job.get("product_filter", "all")
@@ -269,6 +306,12 @@ def run_job(job: dict, r):
         pw.stop()
 
     run_result = reporter.finish()
+    # Salva tambem no historico por usuario
+    if user_email:
+        try:
+            save_user_run_result(r, user_email, run_result)
+        except Exception as e:
+            print(f"  [WARN] Nao foi possivel salvar historico do usuario: {e}")
     _update_ai_context(r, reporter, config)
     clear_run_status(r)
 
