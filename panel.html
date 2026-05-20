@@ -476,7 +476,6 @@ function doLogout() {
 function showChangePassword() {
   const m = document.getElementById('change-pw-modal');
   m.style.display = 'flex';
-  document.getElementById('pw-old').value = '';
   document.getElementById('pw-new').value = '';
   document.getElementById('pw-confirm').value = '';
   document.getElementById('pw-msg').textContent = '';
@@ -487,19 +486,18 @@ function hideChangePassword() {
 }
 
 async function doChangePassword() {
-  const old_pw = document.getElementById('pw-old').value.trim();
   const new_pw = document.getElementById('pw-new').value.trim();
   const confirm_pw = document.getElementById('pw-confirm').value.trim();
   const errEl = document.getElementById('pw-msg');
   errEl.textContent = '';
-  if (!old_pw || !new_pw || !confirm_pw) { errEl.textContent = 'Preencha todos os campos.'; return; }
+  if (!new_pw || !confirm_pw) { errEl.textContent = 'Preencha os campos de nova senha.'; return; }
   if (new_pw !== confirm_pw) { errEl.textContent = 'As senhas não coincidem.'; return; }
   if (new_pw.length < 6) { errEl.textContent = 'Mínimo 6 caracteres.'; return; }
   try {
     const r = await apiFetch('/auth/password', {
       method: 'PUT',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({old_password: old_pw, new_password: new_pw}),
+      body: JSON.stringify({new_password: new_pw}),
     });
     const d = await r.json();
     if (!r.ok) { errEl.textContent = d.detail || 'Erro ao alterar senha.'; return; }
@@ -1041,10 +1039,6 @@ function toast(msg,ms=3000) {
   <div style="background:var(--surface);border-radius:12px;padding:28px;width:360px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.4)">
     <h3 style="margin:0 0 16px;color:var(--text)">🔑 Alterar senha</h3>
     <div class="form-group">
-      <label>Senha atual</label>
-      <input type="password" id="pw-old" placeholder="Senha atual" style="width:100%">
-    </div>
-    <div class="form-group" style="margin-top:10px">
       <label>Nova senha</label>
       <input type="password" id="pw-new" placeholder="Nova senha (mín. 6 caracteres)" style="width:100%">
     </div>

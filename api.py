@@ -193,16 +193,13 @@ async def me(current_user: dict = Depends(get_current_user)):
 
 @app.put('/auth/password')
 async def change_password(payload: dict, current_user: dict = Depends(get_current_user)):
-    """Altera a senha do usuario autenticado."""
+    """Altera a senha do usuario autenticado (sem exigir senha antiga)."""
     try:
-        old_pw  = payload.get('old_password', '')
-        new_pw  = payload.get('new_password', '')
-        if not old_pw or not new_pw:
-            raise HTTPException(status_code=400, detail='Preencha a senha atual e a nova senha')
+        new_pw = payload.get('new_password', '')
+        if not new_pw:
+            raise HTTPException(status_code=400, detail='Informe a nova senha')
         if len(new_pw) < 6:
             raise HTTPException(status_code=400, detail='Nova senha deve ter pelo menos 6 caracteres')
-        if not verify_password(old_pw, current_user['password']):
-            raise HTTPException(status_code=401, detail='Senha atual incorreta')
         r = get_client()
         current_user['password'] = hash_password(new_pw)
         r.set(_user_key(current_user['email']), json.dumps(current_user))
