@@ -167,7 +167,7 @@ input[type="checkbox"]{width:16px;height:16px;accent-color:var(--primary)}
     </div>
     <button class="btn btn-secondary btn-sm" onclick="saveInstructions()">💾 Salvar</button>
     <button class="btn btn-success btn-sm" onclick="enqueueRun('full','Run Completo')">▶ Rodar Tudo</button>
-    <button class="btn-ghost" onclick="doLogout()">Sair</button>
+    <button class="btn-ghost" onclick="showChangePassword()" title="Alterar senha">🔑</button> <button class="btn-ghost" onclick="doLogout()">Sair</button>
   </div>
 </header>
 
@@ -339,6 +339,7 @@ input[type="checkbox"]{width:16px;height:16px;accent-color:var(--primary)}
         <select id="cfg-provider" onchange="updateModelOptions()">
           <option value="openai">OpenAI</option>
           <option value="deepseek">DeepSeek</option>
+          <option value="claude">Claude (Anthropic)</option>
         </select>
       </div>
       <div class="form-group">
@@ -348,7 +349,7 @@ input[type="checkbox"]{width:16px;height:16px;accent-color:var(--primary)}
     </div>
     <div class="form-group">
       <label>API Key</label>
-      <input type="password" id="cfg-api-key" placeholder="sk-... ou sk-deepseek-...">
+      <input type="password" id="cfg-api-key" placeholder="sk-... ou sk-deepseek-... ou sk-ant-...">
       <p class="hint">🔒 Armazenada apenas no servidor Redis. Nunca exposta no frontend.</p>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
@@ -364,6 +365,9 @@ input[type="checkbox"]{width:16px;height:16px;accent-color:var(--primary)}
       <br><br>
       <strong style="color:var(--text)">DeepSeek</strong> — deepseek-chat (custo muito baixo)<br>
       Obtenha sua key em <a href="https://platform.deepseek.com" target="_blank" style="color:var(--accent)">platform.deepseek.com</a>
+      <br><br>
+      <strong style="color:var(--text)">Claude (Anthropic)</strong> — claude-opus-4-5 · claude-sonnet-4-5 · claude-haiku-4-5<br>
+      Obtenha sua key em <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">console.anthropic.com</a>
     </div>
   </div>
 </div>
@@ -404,6 +408,7 @@ const API = '';
 const MODELS = {
   openai:   [{v:'gpt-4o-mini',l:'gpt-4o-mini (rápido e barato)'},{v:'gpt-4o',l:'gpt-4o (mais preciso)'}],
   deepseek: [{v:'deepseek-chat',l:'deepseek-chat (custo baixo)'}],
+  claude:   [{v:'claude-opus-4-5',l:'claude-opus-4-5 (mais potente)'},{v:'claude-sonnet-4-5',l:'claude-sonnet-4-5 (equilíbrio)'},{v:'claude-haiku-4-5',l:'claude-haiku-4-5 (mais rápido)'},{v:'claude-3-5-sonnet-20241022',l:'claude-3-5-sonnet (visão avançada)'},{v:'claude-3-5-haiku-20241022',l:'claude-3-5-haiku (rápido/barato)'}],
 };
 
 // ━━━━━━━━━━━━━━━━━━ STATE ━━━━━━━━━━━━━━━━━━
@@ -995,5 +1000,30 @@ function toast(msg,ms=3000) {
   setTimeout(()=>el.classList.remove('show'),ms);
 }
 </script>
+
+<!-- Modal Alterar Senha -->
+<div id="change-pw-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:none;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:12px;padding:28px;width:360px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+    <h3 style="margin:0 0 16px;color:var(--text)">🔑 Alterar senha</h3>
+    <div class="form-group">
+      <label>Senha atual</label>
+      <input type="password" id="pw-old" placeholder="Senha atual" style="width:100%">
+    </div>
+    <div class="form-group" style="margin-top:10px">
+      <label>Nova senha</label>
+      <input type="password" id="pw-new" placeholder="Nova senha (mín. 6 caracteres)" style="width:100%">
+    </div>
+    <div class="form-group" style="margin-top:10px">
+      <label>Confirmar nova senha</label>
+      <input type="password" id="pw-confirm" placeholder="Repita a nova senha" style="width:100%">
+    </div>
+    <div id="pw-msg" style="font-size:.82rem;margin:10px 0;min-height:18px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+      <button class="btn btn-ghost" onclick="hideChangePassword()">Cancelar</button>
+      <button class="btn btn-primary" onclick="doChangePassword()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
