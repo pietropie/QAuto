@@ -215,9 +215,17 @@ input[type="checkbox"]{width:16px;height:16px;accent-color:var(--primary)}
       <div class="form-group"><label>Nome da página</label><input type="text" id="pg-name" placeholder="Ex: Novo Pedido"></div>
       <div class="form-group"><label>Path</label><input type="text" id="pg-path" placeholder="Ex: /pedidos/novo"></div>
     </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Produto / Grupo</label>
+        <input type="text" id="pg-produto" placeholder="Ex: Aéreo, Hotel, Pacotes" list="produtos-list" autocomplete="off">
+        <datalist id="produtos-list"></datalist>
+        <p class="hint">Agrupe páginas por produto para rodar testes separados por grupo.</p>
+      </div>
+      <div class="form-group"><label>Contexto de negócio</label><textarea id="pg-context" rows="2" placeholder="Ex: Tela B2B. Clientes PJ têm limite de R$50.000."></textarea></div>
+    </div>
     <div class="form-group"><label>Instruções (uma por linha)</label><textarea id="pg-instructions" rows="3" placeholder="Formulário exige pelo menos um produto&#10;Campo desconto só aceita 0-100"></textarea></div>
-    <div class="form-group"><label>Contexto de negócio</label><textarea id="pg-context" rows="2" placeholder="Ex: Tela B2B. Clientes PJ têm limite de R$50.000."></textarea></div>
-    <button class="btn btn-primary" onclick="addPagina()">+ Adicionar Página</button>
+    <button class="btn btn-primary" id="pg-submit-btn" onclick="submitPagina()">+ Adicionar Página</button>
   </div>
   <div id="list-paginas"></div>
 </div>
@@ -235,7 +243,7 @@ input[type="checkbox"]{width:16px;height:16px;accent-color:var(--primary)}
     <div class="form-group"><label>Descrição e regras</label><textarea id="fl-desc" rows="2" placeholder="Descreva o fluxo e as regras..."></textarea></div>
     <div class="form-group"><label>Etapas (uma por linha)</label><textarea id="fl-steps" rows="4" placeholder="1. Acessar /pedidos&#10;2. Criar novo pedido&#10;3. Confirmar"></textarea></div>
     <div class="form-group"><label>O que verificar ao final</label><textarea id="fl-checks" rows="2" placeholder="Pedido aparece na lista&#10;Total calculado corretamente"></textarea></div>
-    <button class="btn btn-primary" onclick="addFluxo()">+ Adicionar Fluxo</button>
+    <button class="btn btn-primary" id="fl-submit-btn" onclick="submitFluxo()">+ Adicionar Fluxo</button>
   </div>
   <div id="list-fluxos"></div>
 </div>
@@ -285,8 +293,17 @@ input[type="checkbox"]{width:16px;height:16px;accent-color:var(--primary)}
         </select>
       </div>
     </div>
-    <div class="form-group"><label>Rótulo</label>
-      <input type="text" id="queue-label" placeholder="Ex: Teste após deploy v2.4">
+    <div class="form-row">
+      <div class="form-group"><label>Rótulo</label>
+        <input type="text" id="queue-label" placeholder="Ex: Teste após deploy v2.4">
+      </div>
+      <div class="form-group">
+        <label>Produto / Grupo <span style="color:var(--muted)">(opcional)</span></label>
+        <select id="queue-product">
+          <option value="all">🔁 Todos os produtos</option>
+        </select>
+        <p class="hint">Filtra quais páginas de instruções serão testadas.</p>
+      </div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-success" onclick="enqueueFromForm()">+ Enfileirar</button>
@@ -537,7 +554,7 @@ async function loadInstructions() {
     if (!r||!r.ok) return;
     const d = await r.json();
     state.general = d.general||[]; state.pages=d.pages||[]; state.flows=d.flows||[];
-    renderAll(); updateBadges();
+    renderAll(); updateBadges(); updateProductDropdowns();
   } catch {}
 }
 async function saveInstructions() {
@@ -576,54 +593,165 @@ function renderGeral() {
 }
 
 // ━━━━━━━━━━━━━━━━━━ PAGINAS ━━━━━━━━━━━━━━━━━━
-function addPagina() {
-  const name=document.getElementById('pg-name').value.trim();
-  const path=document.getElementById('pg-path').value.trim();
-  const raw=document.getElementById('pg-instructions').value.trim();
-  const ctx=document.getElementById('pg-context').value.trim();
+let _editingPageIdx = -1;
+
+function submitPagina() {
+  const name    = document.getElementById('pg-name').value.trim();
+  const path    = document.getElementById('pg-path').value.trim();
+  const raw     = document.getElementById('pg-instructions').value.trim();
+  const ctx     = document.getElementById('pg-context').value.trim();
+  const produto = document.getElementById('pg-produto').value.trim();
   if (!name||!path||!raw) { toast('Preencha nome, path e instruções'); return; }
-  state.pages.push({name,path,instructions:raw.split('\n').filter(Boolean),context:ctx});
-  ['pg-name','pg-path','pg-instructions','pg-context'].forEach(id=>document.getElementById(id).value='');
-  renderPaginas(); updateBadges();
+  const obj = {name, path, instructions: raw.split('\n').filter(Boolean), context: ctx, produto};
+  if (_editingPageIdx >= 0) {
+    state.pages[_editingPageIdx] = obj;
+    _editingPageIdx = -1;
+    document.getElementById('pg-submit-btn').textContent = '+ Adicionar Página';
+  } else {
+    state.pages.push(obj);
+  }
+  ['pg-name','pg-path','pg-instructions','pg-context','pg-produto'].forEach(id=>document.getElementById(id).value='');
+  renderPaginas(); updateBadges(); updateProductDropdowns();
 }
-function removePagina(i) { state.pages.splice(i,1); renderPaginas(); updateBadges(); }
+
+function editPagina(i) {
+  const p = state.pages[i];
+  document.getElementById('pg-name').value         = p.name;
+  document.getElementById('pg-path').value         = p.path;
+  document.getElementById('pg-instructions').value = (p.instructions||[]).join('\n');
+  document.getElementById('pg-context').value      = p.context||'';
+  document.getElementById('pg-produto').value      = p.produto||'';
+  _editingPageIdx = i;
+  document.getElementById('pg-submit-btn').textContent = '💾 Atualizar Página';
+  document.getElementById('pane-paginas').scrollIntoView({behavior:'smooth'});
+  document.getElementById('pg-name').focus();
+}
+
+function removePagina(i) {
+  if (_editingPageIdx === i) { _editingPageIdx = -1; document.getElementById('pg-submit-btn').textContent = '+ Adicionar Página'; }
+  state.pages.splice(i,1);
+  renderPaginas(); updateBadges(); updateProductDropdowns();
+}
+
+function getUniqueProducts() {
+  const set = new Set(state.pages.map(p => p.produto||'').filter(Boolean));
+  return [...set].sort();
+}
+
+function updateProductDropdowns() {
+  // update datalist
+  const dl = document.getElementById('produtos-list');
+  if (dl) dl.innerHTML = getUniqueProducts().map(p=>`<option value="${esc(p)}">`).join('');
+  // update queue product filter
+  const sel = document.getElementById('queue-product');
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="all">🔁 Todos os produtos</option>' +
+      getUniqueProducts().map(p=>`<option value="${esc(p)}">📦 ${esc(p)}</option>`).join('');
+    if (cur && [...sel.options].some(o=>o.value===cur)) sel.value=cur;
+  }
+}
+
 function renderPaginas() {
-  const el=document.getElementById('list-paginas');
+  const el = document.getElementById('list-paginas');
   if (!state.pages.length) { el.innerHTML='<div class="empty"><div class="emoji">📄</div><p>Nenhuma página configurada.</p></div>'; return; }
-  el.innerHTML=state.pages.map((p,i)=>`<div class="card">
-    <div class="card-header">
-      <div><div class="card-title">${esc(p.name)}</div><code style="font-size:.74rem;color:var(--accent)">${esc(p.path)}</code></div>
-      <button class="btn btn-danger btn-icon btn-sm" onclick="removePagina(${i})">✕</button>
-    </div>
-    <ul style="list-style:none">${p.instructions.map((s,j)=>`<li class="step-item"><span class="step-num">${j+1}</span><span class="step-text">${esc(s)}</span></li>`).join('')}</ul>
-    ${p.context?`<p class="hint" style="margin-top:8px"><strong>Contexto:</strong> ${esc(p.context)}</p>`:''}
-  </div>`).join('');
+
+  // Group by product
+  const groups = {};
+  state.pages.forEach((p, i) => {
+    const key = p.produto || '— Sem produto —';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push({...p, _idx: i});
+  });
+
+  let html = '';
+  for (const [produto, pages] of Object.entries(groups)) {
+    html += `<div style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent)">📦 ${esc(produto)}</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-size:.72rem;color:var(--muted)">${pages.length} página${pages.length>1?'s':''}</span>
+      </div>`;
+    for (const p of pages) {
+      html += `<div class="card" style="margin-left:12px;border-left:2px solid var(--primary)">
+        <div class="card-header">
+          <div>
+            <div class="card-title">${esc(p.name)}</div>
+            <code style="font-size:.74rem;color:var(--accent)">${esc(p.path)}</code>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-secondary btn-sm" onclick="editPagina(${p._idx})">✏️ Editar</button>
+            <button class="btn btn-danger btn-icon btn-sm" onclick="removePagina(${p._idx})">✕</button>
+          </div>
+        </div>
+        <ul style="list-style:none">${(p.instructions||[]).map((s,j)=>`<li class="step-item"><span class="step-num">${j+1}</span><span class="step-text">${esc(s)}</span></li>`).join('')}</ul>
+        ${p.context?`<p class="hint" style="margin-top:8px"><strong>Contexto:</strong> ${esc(p.context)}</p>`:''}
+      </div>`;
+    }
+    html += '</div>';
+  }
+  el.innerHTML = html;
 }
 
 // ━━━━━━━━━━━━━━━━━━ FLUXOS ━━━━━━━━━━━━━━━━━━
-function addFluxo() {
-  const name=document.getElementById('fl-name').value.trim();
-  const crit=document.getElementById('fl-criticidade').value;
-  const desc=document.getElementById('fl-desc').value.trim();
-  const rawS=document.getElementById('fl-steps').value.trim();
-  const rawC=document.getElementById('fl-checks').value.trim();
+let _editingFlowIdx = -1;
+
+function submitFluxo() {
+  const name  = document.getElementById('fl-name').value.trim();
+  const crit  = document.getElementById('fl-criticidade').value;
+  const desc  = document.getElementById('fl-desc').value.trim();
+  const rawS  = document.getElementById('fl-steps').value.trim();
+  const rawC  = document.getElementById('fl-checks').value.trim();
   if (!name||!desc||!rawS) { toast('Preencha nome, descrição e etapas'); return; }
-  state.flows.push({name,criticidade:crit,desc,steps:rawS.split('\n').filter(Boolean),checks:rawC.split('\n').filter(Boolean)});
+  const obj = {name, criticidade: crit, desc, steps: rawS.split('\n').filter(Boolean), checks: rawC.split('\n').filter(Boolean)};
+  if (_editingFlowIdx >= 0) {
+    state.flows[_editingFlowIdx] = obj;
+    _editingFlowIdx = -1;
+    document.getElementById('fl-submit-btn').textContent = '+ Adicionar Fluxo';
+  } else {
+    state.flows.push(obj);
+  }
   ['fl-name','fl-desc','fl-steps','fl-checks'].forEach(id=>document.getElementById(id).value='');
   renderFluxos(); updateBadges();
 }
-function removeFluxo(i) { state.flows.splice(i,1); renderFluxos(); updateBadges(); }
+
+function editFluxo(i) {
+  const f = state.flows[i];
+  document.getElementById('fl-name').value         = f.name;
+  document.getElementById('fl-criticidade').value  = f.criticidade||'importante';
+  document.getElementById('fl-desc').value         = f.desc;
+  document.getElementById('fl-steps').value        = (f.steps||[]).join('\n');
+  document.getElementById('fl-checks').value       = (f.checks||[]).join('\n');
+  _editingFlowIdx = i;
+  document.getElementById('fl-submit-btn').textContent = '💾 Atualizar Fluxo';
+  document.getElementById('pane-fluxos').scrollIntoView({behavior:'smooth'});
+  document.getElementById('fl-name').focus();
+}
+
+function removeFluxo(i) {
+  if (_editingFlowIdx === i) { _editingFlowIdx = -1; document.getElementById('fl-submit-btn').textContent = '+ Adicionar Fluxo'; }
+  state.flows.splice(i,1);
+  renderFluxos(); updateBadges();
+}
+
 function renderFluxos() {
-  const el=document.getElementById('list-fluxos');
+  const el = document.getElementById('list-fluxos');
   if (!state.flows.length) { el.innerHTML='<div class="empty"><div class="emoji">🔄</div><p>Nenhum fluxo configurado.</p></div>'; return; }
-  const cl={critico:'sev-alto',importante:'sev-medio',informativo:'sev-baixo'};
-  el.innerHTML=state.flows.map((f,i)=>`<div class="card">
+  const cl = {critico:'sev-alto', importante:'sev-medio', informativo:'sev-baixo'};
+  el.innerHTML = state.flows.map((f,i) => `<div class="card">
     <div class="card-header">
-      <div><div class="card-title">${esc(f.name)}</div><span class="sev ${cl[f.criticidade]}" style="margin-top:4px;display:inline-block">${f.criticidade}</span></div>
-      <button class="btn btn-danger btn-icon btn-sm" onclick="removeFluxo(${i})">✕</button>
+      <div>
+        <div class="card-title">${esc(f.name)}</div>
+        <span class="sev ${cl[f.criticidade]||'sev-medio'}" style="margin-top:4px;display:inline-block">${f.criticidade}</span>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-secondary btn-sm" onclick="editFluxo(${i})">✏️ Editar</button>
+        <button class="btn btn-danger btn-icon btn-sm" onclick="removeFluxo(${i})">✕</button>
+      </div>
     </div>
     <p style="font-size:.83rem;color:var(--muted);margin-bottom:8px">${esc(f.desc)}</p>
     <ul style="list-style:none">${f.steps.map((s,j)=>`<li class="step-item"><span class="step-num">${j+1}</span><span class="step-text">${esc(s)}</span></li>`).join('')}</ul>
+    ${f.checks&&f.checks.length ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)"><span style="font-size:.75rem;color:var(--muted);font-weight:600">✅ VERIFICAÇÕES</span><ul style="list-style:none;margin-top:4px">${f.checks.map(c=>`<li style="font-size:.83rem;padding:3px 0;color:var(--green)">· ${esc(c)}</li>`).join('')}</ul></div>` : ''}
   </div>`).join('');
 }
 
@@ -776,22 +904,23 @@ async function loadQueue() {
   } catch {}
 }
 
-async function enqueueRun(type, label) {
+async function enqueueRun(type, label, product_filter='all') {
   const app_id = document.getElementById('queue-app')?.value || '';
   try {
     await saveInstructions();
-    const r = await apiFetch('/api/queue', { method:'POST', body:JSON.stringify({type, label, app_id}) });
+    const r = await apiFetch('/api/queue', { method:'POST', body:JSON.stringify({type, label, app_id, product_filter}) });
     if (r&&r.ok) { toast('⏳ Job enfileirado!'); loadQueue(); }
     else toast('Erro ao enfileirar');
   } catch(e) { toast('Erro: '+e.message); }
 }
 
 function enqueueFromForm() {
-  const type   = document.getElementById('queue-type').value;
-  const label  = document.getElementById('queue-label').value.trim() || 'Run agendado';
-  const app_id = document.getElementById('queue-app').value;
+  const type           = document.getElementById('queue-type').value;
+  const label          = document.getElementById('queue-label').value.trim() || 'Run agendado';
+  const app_id         = document.getElementById('queue-app').value;
+  const product_filter = document.getElementById('queue-product').value;
   if (!app_id) { toast('Selecione uma aplicação primeiro'); switchTab('apps'); return; }
-  enqueueRun(type, label);
+  enqueueRun(type, label, product_filter);
 }
 
 async function clearQueue() {

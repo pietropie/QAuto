@@ -33,7 +33,17 @@ def load_instrucoes(path: str = INSTRUCOES_FILE) -> dict | None:
 
 def run(page: Page, config: dict, reporter: Reporter) -> None:
     """Ponto de entrada. Executa todas as suítes de instruções customizadas."""
-    instrucoes = load_instrucoes()
+
+    # Prefere as instruções vindas do Redis (via worker) sobre o arquivo YAML legado
+    redis_instr = config.get("_redis_instructions")
+    if redis_instr:
+        instrucoes = {
+            "instrucoes_gerais": redis_instr.get("general", []),
+            "paginas":           redis_instr.get("pages", []),
+            "fluxos":            redis_instr.get("flows", []),
+        }
+    else:
+        instrucoes = load_instrucoes()
 
     if instrucoes is None:
         suite = reporter.add_suite("🎯 Instruções Personalizadas (QA Panel)")
@@ -300,16 +310,4 @@ Identifique riscos, elementos faltando, ou inconsistências que possam quebrar e
 
 def _extract_path_from_step(step_text: str) -> str | None:
     """
-    Tenta extrair um path de navegação do texto da etapa.
-    Ex: "Acessar /pedidos/novo" → "/pedidos/novo"
-    Ex: "Navegar até /clientes" → "/clientes"
-    """
-    import re
-    # Procura por padrão /algo
-    match = re.search(r'(/[\w\-/]+)', step_text)
-    if match:
-        path = match.group(1)
-        # Ignora caminhos genéricos demais
-        if len(path) > 1:
-            return path
-    return None
+    Tenta extrair um
