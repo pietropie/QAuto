@@ -820,7 +820,7 @@ async function addApp() {
   const password = document.getElementById('app-password').value;
   if (!name||!url) { toast('Preencha nome e URL'); return; }
   try {
-    const r = await apiFetch('/api/apps', { method:'POST', body:JSON.stringify({name,url,login_enabled:loginEnabled,username,password}) });
+    const r = await apiFetch('/api/apps', { method:'POST', body:JSON.stringify({name,base_url:url,login_enabled:loginEnabled,login_url:'/login',username,password,username_selector:'',password_selector:'',submit_selector:'',success_indicator:''}) });
     if (!r||!r.ok) { toast('Erro ao salvar app'); return; }
     ['app-name','app-url','app-username','app-password'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('app-login-enabled').checked=false;
@@ -840,7 +840,7 @@ async function deleteApp(id) {
 function openEditModal(app) {
   document.getElementById('edit-app-id').value       = app.id;
   document.getElementById('edit-app-name').value     = app.name;
-  document.getElementById('edit-app-url').value      = app.url;
+  document.getElementById('edit-app-url').value      = app.base_url||app.url||'';
   document.getElementById('edit-app-login').checked  = app.login_enabled||false;
   document.getElementById('edit-app-username').value = app.username||'';
   document.getElementById('edit-app-password').value = app.password||'';
@@ -857,7 +857,7 @@ async function saveEditApp() {
   const username = document.getElementById('edit-app-username').value.trim();
   const password = document.getElementById('edit-app-password').value;
   if (!name||!url) { toast('Preencha nome e URL'); return; }
-  await apiFetch('/api/apps/'+id, { method:'PUT', body:JSON.stringify({name,url,login_enabled:loginEnabled,username,password}) });
+  await apiFetch('/api/apps/'+id, { method:'PUT', body:JSON.stringify({name,base_url:url,login_enabled:loginEnabled,login_url:'/login',username,password,username_selector:'',password_selector:'',submit_selector:'',success_indicator:''}) });
   closeEditModal();
   await loadApps();
   toast('✅ Aplicação atualizada!');
@@ -873,7 +873,7 @@ function renderApps() {
     <div class="app-icon">🌐</div>
     <div class="app-info">
       <div class="app-name">${esc(a.name)}</div>
-      <div class="app-url">${esc(a.url)}</div>
+      <div class="app-url">${esc(a.base_url||a.url||'')}</div>
       <span class="app-badge ${a.login_enabled?'badge-login':'badge-no-login'}">${a.login_enabled?'🔐 Com login':'🔓 Sem login'}</span>
     </div>
     <div style="display:flex;gap:6px;flex-shrink:0">
@@ -887,7 +887,7 @@ function updateAppDropdown() {
   const sel = document.getElementById('queue-app');
   const cur = sel.value;
   sel.innerHTML = '<option value="">— Selecione uma aplicação —</option>' +
-    userApps.map(a=>`<option value="${a.id}">${esc(a.name)} — ${esc(a.url)}</option>`).join('');
+    userApps.map(a=>`<option value="${a.id}">${esc(a.name)} — ${esc(a.base_url||a.url||'')}</option>`).join('');
   if (cur) sel.value = cur;
 }
 
