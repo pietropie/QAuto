@@ -13,9 +13,17 @@ def create_browser(config: dict):
     report_cfg  = config.get("report", {})
 
     pw       = sync_playwright().start()
+    # --no-sandbox e flags adicionais sao necessarios para rodar em Docker como root
     browser  = pw.chromium.launch(
         headless=browser_cfg.get("headless", True),
         slow_mo=browser_cfg.get("slow_mo", 0),
+        args=[
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu",
+            "--single-process",
+        ],
     )
     context  = browser.new_context(
         viewport={"width": 1280, "height": 800},
