@@ -114,20 +114,28 @@ async def serve_panel():
 
 @app.post("/auth/register")
 async def register(payload: RegisterPayload):
-    if len(payload.password) < 6:
-        raise HTTPException(status_code=400, detail="Senha deve ter pelo menos 6 caracteres")
-    r = get_client()
-    if _get_user_profile(r, payload.email):
-        raise HTTPException(status_code=400, detail="Email ja cadastrado")
-    profile = {
-        "email":           payload.email,
-        "name":            payload.name,
-        "hashed_password": hash_password(payload.password),
-        "created_at":      time.time(),
-    }
-    _save_user_profile(r, profile)
-    token = create_token(payload.email)
-    return {"token": token, "email": payload.email, "name": payload.name}
+    import traceback as _tb
+    try:
+        if len(payload.password) < 6:
+            raise HTTPException(status_code=400, detail="Senha deve ter pelo menos 6 caracteres")
+        r = get_client()
+        if _get_user_profile(r, payload.email):
+            raise HTTPException(status_code=400, detail="Email ja cadastrado")
+        profile = {
+            "email":           payload.email,
+            "name":            payload.name,
+            "hashed_password": hash_password(payload.password),
+            "created_at":      time.time(),
+        }
+        _save_user_profile(r, profile)
+        token = create_token(payload.email)
+        return {"token": token, "email": payload.email, "name": payload.name}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[REGISTER ERROR] {type(e).__name__}: {e}")
+        print(_tb.format_exc())
+        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {str(e)}")
 
 
 @app.post("/auth/login")

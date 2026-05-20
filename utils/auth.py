@@ -1,22 +1,23 @@
 """auth.py - JWT + bcrypt para autenticacao de usuarios."""
 import os
 from datetime import datetime, timedelta
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 SECRET_KEY  = os.getenv("SECRET_KEY", "qa-panel-insecure-change-in-production!")
 ALGORITHM   = "HS256"
 EXPIRE_DAYS = 7
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    try:
+        return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
+    except Exception:
+        return False
 
 
 def create_token(email: str) -> str:
