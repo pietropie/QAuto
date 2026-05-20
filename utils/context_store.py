@@ -198,3 +198,117 @@ def get_run_status(r: redis.Redis) -> dict | None:
 
 def clear_run_status(r: redis.Redis):
     r.delete(K_RUN_STATUS)
+
+
+# ─────────────────────────────────────────────────────────────
+# DADOS POR USUARIO (apps, ai-config, instrucoes, historico)
+# ─────────────────────────────────────────────────────────────
+
+def _uk(email: str, suffix: str) -> str:
+    """Retorna chave Redis namespaced por usuario."""
+    return f"qa:u:{email}:{suffix}"
+
+
+# --- Apps ---
+
+def get_user_apps(r: redis.Redis, email: str) -> list:
+    raw = r.get(_uk(email, "apps"))
+    return json.loads(raw) if raw else []
+
+
+def save_user_apps(r: redis.Redis, email: str, apps: list):
+    r.set(_uk(email, "apps"), json.dumps(apps, ensure_ascii=False))
+
+
+# --- AI Config ---
+
+def get_user_ai_config(r: redis.Redis, email: str) -> dict:
+    raw = r.get(_uk(email, "ai"))
+    if not raw:
+        return {"provider": "openai", "model": "gpt-4o-mini", "api_key": ""}
+    return json.loads(raw)
+
+
+def save_user_ai_config(r: redis.Redis, email: str, cfg: dict):
+    r.set(_uk(email, "ai"), json.dumps(cfg, ensure_ascii=False))
+
+
+# --- Instrucoes por usuario ---
+
+def save_user_instructions(r: redis.Redis, email: str, general: list, pages: list, flows: list):
+    pipe = r.pipeline()
+    pipe.set(_uk(email, "instr:general"), json.dumps(general, ensure_ascii=False))
+    pipe.set(_uk(email, "instr:pages"),   json.dumps(pages,   ensure_ascii=False))
+    pipe.set(_uk(email, "instr:flows"),   json.dumps(flows,   ensure_ascii=False))
+    pipe.execute()
+
+
+def load_user_instructions(r: redis.Redis, email: str) -> dict:
+    g = r.get(_uk(email, "instr:general"))
+    p = r.get(_uk(email, "instr:pages"))
+    f = r.get(_uk(email, "instr:flows"))
+    return {
+        "general": json.loads(g) if g else [],
+        "pages":   json.loads(p) if p else [],
+        "flows":   json.loads(f) if f else [],
+    }
+
+
+# --- Historico por usuario ---
+
+def save_user_run(r: redis.Redis, email: str, run: dict):
+    run.setdefault("id", str(int(time.time())))
+    score = run.get("started_at", time.time())
+    r.zadd(_uk(email, "history"), {json.dumps(run, ensure_ascii=False): score})
+    r.zremrangebyrank(_uk(email, "history"), 0, -51)
+
+
+def get_user_history(r: redis.Redis, email: str, limit: int = 20) -> list:
+    items = r.zrevrange(_uk(email, "history"), 0, limit - 1)
+    return [json.loads(i) for i in items]
+
+
+# --- Contexto acumulado por usuario ---
+
+def get_user_context(r: redis.Redis, email: str) -> dict:
+    raw = r.get(_uk(email, "context"))
+    if not raw:
+        return {"summary": "", "known_issues": [], "stable_areas": [], "high_risk_pages": [], "last_updated": None}
+    return json.loads(raw)
+
+
+def update_user_context(r: redis.Redis, email: str, ctx: dict):
+    ctx["last_updated"] = time.time()
+    r.set(_uk(email, "context"), json.dumps(ctx, ensure_ascii=False))
+
+
+def get_user_failure_counts(r: redis.Redis, email: str) -> dict:
+    return {k: int(v) for k, v in (r.hgetall(_uk(email, "failures")) or {}).items()}
+
+
+def record_user_failure(r: redis.Redis, email: str, page_path: str):
+    r.hincrby(_uk(email, "failures"), page_path, 1)
+
+
+def record_user_success(r: redis.Redis, email: str, page_path: str):
+    cur = int(r.hget(_uk(email, "failures"), page_path) or 0)
+    if cur > 0:
+        r.hset(_uk(email, "failures"), page_path, max(0, cur - 1))
+
+
+def build_user_context_prompt(r: redis.Redis, email: str) -> str:
+    ctx      = get_user_context(r, email)
+    failures = get_user_failure_counts(r, email)
+    lines = ["=== CONTEXTO ACUMULADO DE EXECUCOES ANTERIORES ==="]
+    if ctx.get("summary"):
+        lines.append(f"Resumo: {ctx['summary']}")
+    if ctx.get("known_issues"):
+        lines.append("Problemas conhecidos:")
+        for i in ctx["known_issues"][:5]:
+            lines.append(f"  - {i}")
+    high = sorted(failures.items(), key=lambda x: x[1], reverse=True)[:5]
+    if high:
+        lines.append("Paginas com mais falhas:")
+        for path, cnt in high:
+            lines.append(f"  - {path}: {cnt} falha(s)")
+    return "\n".join(lines) if len(lines) > 1 else ""

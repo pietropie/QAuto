@@ -30,6 +30,7 @@ services:
       - APP_PASSWORD=${APP_PASSWORD}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ENV=${ENV:-production}
+      - SECRET_KEY=${SECRET_KEY:-qa-panel-insecure-change-in-production}
       - PORT=8000
     volumes:
       - reports_data:/app/reports

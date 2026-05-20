@@ -13,68 +13,144 @@
   --text:#f1f5f9;--muted:#94a3b8;--radius:10px;
 }
 body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
-header{background:linear-gradient(135deg,#1e1b4b,#0f172a);border-bottom:1px solid var(--border);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
-.logo{display:flex;align-items:center;gap:12px}
-.logo-icon{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:20px}
-.logo h1{font-size:1.1rem;font-weight:700}.logo p{font-size:.75rem;color:var(--muted)}
-.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block;margin-right:6px;transition:background .3s}
+/* --- Login Overlay --- */
+#login-overlay{position:fixed;inset:0;background:#0a0f1e;z-index:1000;display:flex;align-items:center;justify-content:center}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px;width:100%;max-width:420px}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo .icon{font-size:2.5rem;display:block;margin-bottom:8px}
+.login-logo h1{font-size:1.35rem;font-weight:700;margin-bottom:4px}
+.login-logo p{color:var(--muted);font-size:.85rem}
+.auth-error{background:#450a0a;color:#fca5a5;border:1px solid #991b1b;border-radius:8px;padding:10px 14px;font-size:.83rem;margin-bottom:16px;display:none}
+.auth-link{text-align:center;margin-top:16px;font-size:.83rem;color:var(--muted)}
+.auth-link a{color:var(--primary);text-decoration:none;font-weight:600}
+/* --- Header --- */
+header{background:linear-gradient(135deg,#1e1b4b,#0f172a);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo h1{font-size:1rem;font-weight:700}.logo p{font-size:.72rem;color:var(--muted)}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block;margin-right:5px;transition:background .3s}
 .conn-dot.ok{background:var(--green)}.conn-dot.err{background:var(--red)}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s}
+.user-pill{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:.8rem}
+.user-pill span{color:var(--muted)}
+/* --- Buttons --- */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:none;font-size:.83rem;font-weight:600;cursor:pointer;transition:all .15s}
 .btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-h)}
 .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{background:var(--border)}
 .btn-success{background:#15803d;color:#fff}.btn-success:hover{background:#166534}
 .btn-danger{background:#991b1b;color:#fff}.btn-danger:hover{background:#7f1d1d}
-.btn-sm{padding:5px 11px;font-size:.78rem}.btn-icon{padding:6px;border-radius:6px}
-.tabs-bar{display:flex;gap:4px;padding:20px 32px 0;border-bottom:1px solid var(--border);overflow-x:auto}
-.tab-btn{display:flex;align-items:center;gap:8px;padding:10px 20px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.88rem;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;border-radius:6px 6px 0 0}
+.btn-ghost{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:4px 8px;border-radius:6px}.btn-ghost:hover{color:var(--text);background:var(--surface2)}
+.btn-sm{padding:4px 10px;font-size:.76rem}.btn-icon{padding:5px;border-radius:6px}
+/* --- Tabs --- */
+.tabs-bar{display:flex;gap:3px;padding:16px 28px 0;border-bottom:1px solid var(--border);overflow-x:auto}
+.tab-btn{display:flex;align-items:center;gap:6px;padding:9px 16px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;border-radius:6px 6px 0 0}
 .tab-btn:hover{color:var(--text);background:var(--surface2)}
 .tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);background:var(--surface)}
-.tab-badge{background:var(--primary);color:#fff;font-size:.68rem;font-weight:700;padding:1px 6px;border-radius:20px;min-width:18px;text-align:center}
-.pane{display:none;padding:28px 32px}.pane.active{display:block}
-.pane-header{margin-bottom:20px}.pane-header h2{font-size:1.05rem;font-weight:700;margin-bottom:4px}.pane-header p{color:var(--muted);font-size:.85rem}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:12px}
-.card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
-.card-title{font-weight:600;font-size:.93rem}.card-actions{display:flex;gap:6px;flex-shrink:0}
-label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:4px;font-weight:500}
-input[type="text"],textarea,select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:9px 12px;font-size:.85rem;font-family:inherit;transition:border-color .15s;outline:none}
-input[type="text"]:focus,textarea:focus,select:focus{border-color:var(--primary)}
-textarea{resize:vertical;min-height:80px}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px}
-.form-group{margin-bottom:12px}
-.add-bar{display:flex;gap:8px;margin-bottom:12px}.add-bar input{flex:1}
-.hint{font-size:.74rem;color:var(--muted);margin-top:3px}
-.step-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.tab-badge{background:var(--primary);color:#fff;font-size:.66rem;font-weight:700;padding:1px 6px;border-radius:20px;min-width:18px;text-align:center}
+/* --- Panes --- */
+.pane{display:none;padding:24px 28px}.pane.active{display:block}
+.pane-header{margin-bottom:18px}.pane-header h2{font-size:1rem;font-weight:700;margin-bottom:3px}.pane-header p{color:var(--muted);font-size:.83rem}
+/* --- Cards --- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px}
+.card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.card-title{font-weight:600;font-size:.9rem}.card-actions{display:flex;gap:6px;flex-shrink:0}
+/* --- Forms --- */
+label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px;font-weight:500}
+input[type="text"],input[type="email"],input[type="password"],textarea,select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:8px 11px;font-size:.84rem;font-family:inherit;transition:border-color .15s;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--primary)}
+textarea{resize:vertical;min-height:75px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px}
+.form-group{margin-bottom:10px}
+.add-bar{display:flex;gap:8px;margin-bottom:10px}.add-bar input{flex:1}
+.hint{font-size:.72rem;color:var(--muted);margin-top:3px}
+/* --- List items --- */
+.step-item{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--border)}
 .step-item:last-child{border-bottom:none}
-.step-num{min-width:22px;height:22px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;margin-top:2px}
-.step-text{flex:1;font-size:.86rem}
-.sev{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.73rem;font-weight:600}
+.step-num{min-width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;margin-top:2px;flex-shrink:0}
+.step-text{flex:1;font-size:.85rem}
+.sev{display:inline-block;padding:2px 7px;border-radius:4px;font-size:.71rem;font-weight:600}
 .sev-alto{background:#450a0a;color:#fca5a5}.sev-medio{background:#431407;color:#fdba74}.sev-baixo{background:#052e16;color:#86efac}
-.empty{text-align:center;padding:40px 24px;color:var(--muted)}.empty .emoji{font-size:2rem;margin-bottom:10px}.empty p{font-size:.85rem}
-/* Fila e historico */
-.run-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:8px}
-.run-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.run-label{font-weight:600;font-size:.9rem}
-.run-meta{font-size:.78rem;color:var(--muted)}
-.run-stats{display:flex;gap:12px;margin-top:10px}
-.stat-pill{font-size:.78rem;font-weight:700;padding:3px 10px;border-radius:20px}
+.empty{text-align:center;padding:36px 20px;color:var(--muted)}.empty .emoji{font-size:2rem;margin-bottom:8px}.empty p{font-size:.83rem}
+/* --- Run/Queue --- */
+.run-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:13px;margin-bottom:7px}
+.run-header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.run-label{font-weight:600;font-size:.88rem}.run-meta{font-size:.76rem;color:var(--muted)}
+.run-stats{display:flex;gap:10px;margin-top:8px}
+.stat-pill{font-size:.76rem;font-weight:700;padding:2px 9px;border-radius:20px}
 .stat-pass{background:#052e16;color:var(--green)}.stat-fail{background:#450a0a;color:#fca5a5}.stat-warn{background:#431407;color:#fdba74}
-/* Live status bar */
-#status-bar{background:var(--surface2);border-bottom:1px solid var(--border);padding:10px 32px;display:none;align-items:center;gap:16px;flex-wrap:wrap}
+/* --- Status bar --- */
+#status-bar{background:var(--surface2);border-bottom:1px solid var(--border);padding:9px 28px;display:none;align-items:center;gap:14px;flex-wrap:wrap}
 #status-bar.visible{display:flex}
-.status-pulse{width:10px;height:10px;border-radius:50%;background:var(--primary);animation:pulse 1.2s infinite}
+.status-pulse{width:9px;height:9px;border-radius:50%;background:var(--primary);animation:pulse 1.2s infinite;flex-shrink:0}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.progress-bar{flex:1;height:6px;background:var(--border);border-radius:3px;min-width:120px;overflow:hidden}
+.progress-bar{flex:1;height:5px;background:var(--border);border-radius:3px;min-width:100px;overflow:hidden}
 .progress-fill{height:100%;background:var(--primary);border-radius:3px;transition:width .4s}
-/* Toast */
-#toast{position:fixed;bottom:24px;right:24px;background:#14532d;color:#bbf7d0;border:1px solid #16a34a;padding:12px 20px;border-radius:8px;font-size:.85rem;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;z-index:999}
+/* --- App cards --- */
+.app-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:14px}
+.app-icon{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.app-info{flex:1;min-width:0}
+.app-name{font-weight:600;font-size:.9rem;margin-bottom:2px}
+.app-url{font-size:.76rem;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app-badge{display:inline-block;padding:1px 7px;border-radius:4px;font-size:.7rem;font-weight:600;margin-top:4px}
+.badge-login{background:#1e3a5f;color:#93c5fd}.badge-no-login{background:#1c2e1c;color:#86efac}
+/* --- Job items --- */
+.job-item{display:flex;align-items:center;gap:10px;padding:9px 13px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;margin-bottom:5px;font-size:.83rem}
+.job-type-badge{background:var(--primary);color:#fff;font-size:.7rem;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0}
+/* --- Toast --- */
+#toast{position:fixed;bottom:22px;right:22px;background:#14532d;color:#bbf7d0;border:1px solid #16a34a;padding:11px 18px;border-radius:8px;font-size:.83rem;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;z-index:999}
 #toast.show{opacity:1;transform:translateY(0)}
-/* Queue jobs */
-.job-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;margin-bottom:6px;font-size:.85rem}
-.job-type-badge{background:var(--primary);color:#fff;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:4px}
+/* --- Modal edit --- */
+#edit-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:none;align-items:center;justify-content:center}
+#edit-modal.open{display:flex}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;width:100%;max-width:480px}
+.modal-title{font-weight:700;font-size:1rem;margin-bottom:18px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+/* --- Checkbox toggle --- */
+.toggle-row{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;font-size:.84rem;color:var(--text)}
+input[type="checkbox"]{width:16px;height:16px;accent-color:var(--primary)}
 </style>
 </head>
 <body>
 
+<!-- ══════════════════ LOGIN OVERLAY ══════════════════ -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">
+      <span class="icon">🔍</span>
+      <h1>QA Automation Panel</h1>
+      <p>Entre com sua conta para continuar</p>
+    </div>
+    <div class="auth-error" id="auth-error"></div>
+
+    <!-- Login form -->
+    <div id="login-form">
+      <div class="form-group"><label>Email</label>
+        <input type="email" id="l-email" placeholder="voce@empresa.com" autocomplete="email">
+      </div>
+      <div class="form-group"><label>Senha</label>
+        <input type="password" id="l-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="doLogin()">Entrar</button>
+      <p class="auth-link">Não tem conta? <a href="#" onclick="showRegister(event)">Criar conta</a></p>
+    </div>
+
+    <!-- Register form -->
+    <div id="register-form" style="display:none">
+      <div class="form-group"><label>Nome</label>
+        <input type="text" id="r-name" placeholder="Seu nome">
+      </div>
+      <div class="form-group"><label>Email</label>
+        <input type="email" id="r-email" placeholder="voce@empresa.com">
+      </div>
+      <div class="form-group"><label>Senha <span style="color:var(--muted)">(mín. 6 caracteres)</span></label>
+        <input type="password" id="r-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()">
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="doRegister()">Criar conta</button>
+      <p class="auth-link">Já tem conta? <a href="#" onclick="showLogin(event)">Entrar</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ MAIN APP ══════════════════ -->
 <header>
   <div class="logo">
     <div class="logo-icon">🔍</div>
@@ -83,36 +159,44 @@ textarea{resize:vertical;min-height:80px}
       <p><span class="conn-dot" id="conn-dot"></span><span id="conn-label">Conectando...</span></p>
     </div>
   </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <button class="btn btn-secondary" onclick="saveInstructions()">💾 Salvar no Redis</button>
-    <button class="btn btn-success" onclick="enqueueRun('full','Run Completo')">▶ Rodar Tudo</button>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <div class="user-pill">
+      <span>👤</span>
+      <span id="user-name" style="color:var(--text);font-weight:600"></span>
+      <span id="user-email"></span>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="saveInstructions()">💾 Salvar</button>
+    <button class="btn btn-success btn-sm" onclick="enqueueRun('full','Run Completo')">▶ Rodar Tudo</button>
+    <button class="btn-ghost" onclick="doLogout()">Sair</button>
   </div>
 </header>
 
-<!-- Status bar do run atual -->
+<!-- Status bar -->
 <div id="status-bar">
   <div class="status-pulse"></div>
-  <span id="status-suite" style="font-size:.85rem;font-weight:600">Aguardando...</span>
+  <span id="status-suite" style="font-size:.84rem;font-weight:600">Aguardando...</span>
   <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-  <span id="status-counts" style="font-size:.78rem;color:var(--muted)"></span>
+  <span id="status-counts" style="font-size:.76rem;color:var(--muted)"></span>
 </div>
 
 <div class="tabs-bar">
   <button class="tab-btn active" onclick="switchTab('geral')"    id="tab-geral">💡 Gerais <span class="tab-badge" id="badge-geral">0</span></button>
   <button class="tab-btn"        onclick="switchTab('paginas')"  id="tab-paginas">📄 Páginas <span class="tab-badge" id="badge-paginas">0</span></button>
   <button class="tab-btn"        onclick="switchTab('fluxos')"   id="tab-fluxos">🔄 Fluxos <span class="tab-badge" id="badge-fluxos">0</span></button>
+  <button class="tab-btn"        onclick="switchTab('apps')"     id="tab-apps">🌐 Aplicações <span class="tab-badge" id="badge-apps">0</span></button>
   <button class="tab-btn"        onclick="switchTab('fila')"     id="tab-fila">🗂 Fila <span class="tab-badge" id="badge-fila">0</span></button>
   <button class="tab-btn"        onclick="switchTab('historico')" id="tab-historico">📊 Histórico</button>
   <button class="tab-btn"        onclick="switchTab('contexto')" id="tab-contexto">🧠 Contexto IA</button>
+  <button class="tab-btn"        onclick="switchTab('config')"   id="tab-config">⚙️ Config IA</button>
 </div>
 
 <!-- PANE: GERAIS -->
 <div class="pane active" id="pane-geral">
-  <div class="pane-header"><h2>💡 Recomendações Gerais</h2><p>O que a IA deve verificar em qualquer página, em português.</p></div>
+  <div class="pane-header"><h2>💡 Recomendações Gerais</h2><p>O que a IA deve verificar em qualquer página.</p></div>
   <div class="card">
     <div class="add-bar">
       <input type="text" id="input-geral" placeholder='Ex: "Botão salvar deve ficar desabilitado durante envio"' onkeydown="if(event.key==='Enter')addGeral()">
-      <select id="sev-geral" style="width:130px;flex-shrink:0">
+      <select id="sev-geral" style="width:120px;flex-shrink:0">
         <option value="alto">🔴 Crítico</option>
         <option value="medio" selected>🟡 Médio</option>
         <option value="baixo">🟢 Info</option>
@@ -125,13 +209,13 @@ textarea{resize:vertical;min-height:80px}
 
 <!-- PANE: PÁGINAS -->
 <div class="pane" id="pane-paginas">
-  <div class="pane-header"><h2>📄 Instruções por Página</h2><p>Instruções específicas para cada tela da aplicação.</p></div>
+  <div class="pane-header"><h2>📄 Instruções por Página</h2><p>Instruções específicas para cada tela.</p></div>
   <div class="card">
     <div class="form-row">
-      <div class="form-group"><label>Nome da página</label><input type="text" id="pg-name" placeholder="Ex: Tela de Novo Pedido"></div>
+      <div class="form-group"><label>Nome da página</label><input type="text" id="pg-name" placeholder="Ex: Novo Pedido"></div>
       <div class="form-group"><label>Path</label><input type="text" id="pg-path" placeholder="Ex: /pedidos/novo"></div>
     </div>
-    <div class="form-group"><label>Instruções (uma por linha)</label><textarea id="pg-instructions" rows="4" placeholder="Verificar se formulário exige pelo menos um produto&#10;Campo desconto só aceita 0-100"></textarea></div>
+    <div class="form-group"><label>Instruções (uma por linha)</label><textarea id="pg-instructions" rows="3" placeholder="Formulário exige pelo menos um produto&#10;Campo desconto só aceita 0-100"></textarea></div>
     <div class="form-group"><label>Contexto de negócio</label><textarea id="pg-context" rows="2" placeholder="Ex: Tela B2B. Clientes PJ têm limite de R$50.000."></textarea></div>
     <button class="btn btn-primary" onclick="addPagina()">+ Adicionar Página</button>
   </div>
@@ -143,102 +227,276 @@ textarea{resize:vertical;min-height:80px}
   <div class="pane-header"><h2>🔄 Fluxos / Jornadas</h2><p>Jornadas completas com etapas e regras de negócio.</p></div>
   <div class="card">
     <div class="form-row">
-      <div class="form-group"><label>Nome do fluxo</label><input type="text" id="fl-name" placeholder="Ex: Jornada de compra com desconto"></div>
+      <div class="form-group"><label>Nome do fluxo</label><input type="text" id="fl-name" placeholder="Ex: Compra com desconto"></div>
       <div class="form-group"><label>Criticidade</label>
         <select id="fl-criticidade"><option value="critico">🔴 Crítico</option><option value="importante" selected>🟡 Importante</option><option value="informativo">🟢 Info</option></select>
       </div>
     </div>
-    <div class="form-group"><label>Descrição e regras de negócio</label><textarea id="fl-desc" rows="3" placeholder="Descreva o fluxo e as regras que devem ser respeitadas..."></textarea></div>
-    <div class="form-group"><label>Etapas (uma por linha, em ordem)</label><textarea id="fl-steps" rows="5" placeholder="1. Fazer login&#10;2. Acessar /pedidos&#10;3. Criar novo pedido"></textarea></div>
-    <div class="form-group"><label>O que verificar ao final</label><textarea id="fl-checks" rows="3" placeholder="Pedido deve aparecer na lista&#10;Total calculado corretamente"></textarea></div>
+    <div class="form-group"><label>Descrição e regras</label><textarea id="fl-desc" rows="2" placeholder="Descreva o fluxo e as regras..."></textarea></div>
+    <div class="form-group"><label>Etapas (uma por linha)</label><textarea id="fl-steps" rows="4" placeholder="1. Acessar /pedidos&#10;2. Criar novo pedido&#10;3. Confirmar"></textarea></div>
+    <div class="form-group"><label>O que verificar ao final</label><textarea id="fl-checks" rows="2" placeholder="Pedido aparece na lista&#10;Total calculado corretamente"></textarea></div>
     <button class="btn btn-primary" onclick="addFluxo()">+ Adicionar Fluxo</button>
   </div>
   <div id="list-fluxos"></div>
 </div>
 
+<!-- PANE: APLICAÇÕES -->
+<div class="pane" id="pane-apps">
+  <div class="pane-header"><h2>🌐 Aplicações</h2><p>Gerencie as aplicações que você quer testar.</p></div>
+  <div class="card">
+    <div class="card-title" style="margin-bottom:14px">+ Nova Aplicação</div>
+    <div class="form-row">
+      <div class="form-group"><label>Nome</label><input type="text" id="app-name" placeholder="Ex: Loja Principal"></div>
+      <div class="form-group"><label>URL Base</label><input type="text" id="app-url" placeholder="https://minha-app.com.br"></div>
+    </div>
+    <div class="form-group">
+      <label class="toggle-row">
+        <input type="checkbox" id="app-login-enabled" onchange="toggleAppLogin()">
+        Requer login (usuário e senha)
+      </label>
+    </div>
+    <div id="app-login-fields" style="display:none">
+      <div class="form-row">
+        <div class="form-group"><label>Usuário / Email</label><input type="text" id="app-username" placeholder="usuario@empresa.com"></div>
+        <div class="form-group"><label>Senha</label><input type="password" id="app-password" placeholder="senha"></div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="addApp()">+ Adicionar Aplicação</button>
+  </div>
+  <div id="list-apps"></div>
+</div>
+
 <!-- PANE: FILA -->
 <div class="pane" id="pane-fila">
   <div class="pane-header"><h2>🗂 Fila de Testes</h2><p>Adicione runs à fila. O worker executa automaticamente.</p></div>
-  <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-    <div style="flex:1;min-width:180px">
-      <label>Tipo de run</label>
-      <select id="queue-type">
-        <option value="full">🔁 Run Completo</option>
-        <option value="custom">🎯 Só instruções personalizadas</option>
-        <option value="visual">🎨 Só visual (IA)</option>
-        <option value="navegacao">🧭 Só navegação</option>
-        <option value="formularios">📋 Só formulários</option>
-        <option value="pedidos">🛒 Só pedidos</option>
-      </select>
+  <div class="card">
+    <div class="form-row">
+      <div class="form-group"><label>Aplicação</label>
+        <select id="queue-app"><option value="">— Selecione uma aplicação —</option></select>
+      </div>
+      <div class="form-group"><label>Tipo de run</label>
+        <select id="queue-type">
+          <option value="full">🔁 Run Completo</option>
+          <option value="custom">🎯 Só instruções personalizadas</option>
+          <option value="visual">🎨 Só visual (IA)</option>
+          <option value="navegacao">🧭 Só navegação</option>
+          <option value="formularios">📋 Só formulários</option>
+          <option value="pedidos">🛒 Só pedidos</option>
+        </select>
+      </div>
     </div>
-    <div style="flex:2;min-width:200px">
-      <label>Rótulo</label>
+    <div class="form-group"><label>Rótulo</label>
       <input type="text" id="queue-label" placeholder="Ex: Teste após deploy v2.4">
     </div>
-    <button class="btn btn-success" onclick="enqueueFromForm()">+ Enfileirar</button>
-    <button class="btn btn-danger btn-sm" onclick="clearQueue()" title="Limpar fila">🗑 Limpar fila</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-success" onclick="enqueueFromForm()">+ Enfileirar</button>
+      <button class="btn btn-danger btn-sm" onclick="clearQueue()">🗑 Limpar fila</button>
+    </div>
   </div>
   <div id="queue-list"></div>
 </div>
 
 <!-- PANE: HISTÓRICO -->
 <div class="pane" id="pane-historico">
-  <div class="pane-header"><h2>📊 Histórico de Execuções</h2><p>Últimos runs executados pelo worker.</p></div>
+  <div class="pane-header"><h2>📊 Histórico de Execuções</h2><p>Últimos runs do seu usuário.</p></div>
   <div id="history-list"></div>
 </div>
 
 <!-- PANE: CONTEXTO IA -->
 <div class="pane" id="pane-contexto">
-  <div class="pane-header">
-    <h2>🧠 Contexto Acumulado da IA</h2>
-    <p>O que a IA aprendeu sobre sua aplicação ao longo dos runs.</p>
-  </div>
-  <div style="display:flex;gap:10px;margin-bottom:16px">
+  <div class="pane-header"><h2>🧠 Contexto Acumulado da IA</h2><p>O que a IA aprendeu sobre sua aplicação.</p></div>
+  <div style="display:flex;gap:8px;margin-bottom:14px">
     <button class="btn btn-secondary btn-sm" onclick="loadContext()">🔄 Atualizar</button>
     <button class="btn btn-danger btn-sm" onclick="resetContext()">🗑 Resetar contexto</button>
   </div>
   <div id="context-content"></div>
 </div>
 
+<!-- PANE: CONFIG IA -->
+<div class="pane" id="pane-config">
+  <div class="pane-header"><h2>⚙️ Configuração da IA</h2><p>Escolha o provider e insira sua API key. Salvo com segurança no servidor.</p></div>
+  <div class="card" style="max-width:560px">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Provider</label>
+        <select id="cfg-provider" onchange="updateModelOptions()">
+          <option value="openai">OpenAI</option>
+          <option value="deepseek">DeepSeek</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Modelo</label>
+        <select id="cfg-model"></select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>API Key</label>
+      <input type="password" id="cfg-api-key" placeholder="sk-... ou sk-deepseek-...">
+      <p class="hint">🔒 Armazenada apenas no servidor Redis. Nunca exposta no frontend.</p>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-primary" onclick="saveAiConfig()">💾 Salvar configuração</button>
+      <span id="cfg-status" style="font-size:.8rem;color:var(--muted)"></span>
+    </div>
+  </div>
+  <div class="card" style="max-width:560px;margin-top:4px">
+    <div class="card-title" style="margin-bottom:8px">📋 Providers disponíveis</div>
+    <div style="font-size:.82rem;color:var(--muted);line-height:1.8">
+      <strong style="color:var(--text)">OpenAI</strong> — gpt-4o-mini (rápido, barato) · gpt-4o (mais preciso)<br>
+      Obtenha sua key em <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--accent)">platform.openai.com</a>
+      <br><br>
+      <strong style="color:var(--text)">DeepSeek</strong> — deepseek-chat (custo muito baixo)<br>
+      Obtenha sua key em <a href="https://platform.deepseek.com" target="_blank" style="color:var(--accent)">platform.deepseek.com</a>
+    </div>
+  </div>
+</div>
+
+<!-- Edit App Modal -->
+<div id="edit-modal">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Editar Aplicação</div>
+    <input type="hidden" id="edit-app-id">
+    <div class="form-row">
+      <div class="form-group"><label>Nome</label><input type="text" id="edit-app-name"></div>
+      <div class="form-group"><label>URL Base</label><input type="text" id="edit-app-url"></div>
+    </div>
+    <div class="form-group">
+      <label class="toggle-row">
+        <input type="checkbox" id="edit-app-login" onchange="toggleEditLogin()">
+        Requer login
+      </label>
+    </div>
+    <div id="edit-login-fields" style="display:none">
+      <div class="form-row">
+        <div class="form-group"><label>Usuário</label><input type="text" id="edit-app-username"></div>
+        <div class="form-group"><label>Senha</label><input type="password" id="edit-app-password"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeEditModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEditApp()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
+// ━━━━━━━━━━━━━━━━━━ CONFIG ━━━━━━━━━━━━━━━━━━
+const API = '';
+const MODELS = {
+  openai:   [{v:'gpt-4o-mini',l:'gpt-4o-mini (rápido e barato)'},{v:'gpt-4o',l:'gpt-4o (mais preciso)'}],
+  deepseek: [{v:'deepseek-chat',l:'deepseek-chat (custo baixo)'}],
+};
+
 // ━━━━━━━━━━━━━━━━━━ STATE ━━━━━━━━━━━━━━━━━━
-const API = '';  // mesmo host
 let state = { general:[], pages:[], flows:[] };
-let es = null;   // EventSource SSE
+let userApps = [];
+let currentUser = null;
+let es = null;
+
+// ━━━━━━━━━━━━━━━━━━ AUTH ━━━━━━━━━━━━━━━━━━
+function getToken() { return localStorage.getItem('qa_token') || ''; }
+function setToken(t) { localStorage.setItem('qa_token', t); }
+function clearToken() { localStorage.removeItem('qa_token'); }
+
+function authHeaders() {
+  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() };
+}
+
+async function apiFetch(path, opts = {}) {
+  opts.headers = { ...authHeaders(), ...(opts.headers || {}) };
+  const r = await fetch(API + path, opts);
+  if (r.status === 401) { doLogout(); return null; }
+  return r;
+}
+
+function showRegister(e) { e && e.preventDefault(); document.getElementById('login-form').style.display='none'; document.getElementById('register-form').style.display=''; document.getElementById('auth-error').style.display='none'; }
+function showLogin(e)    { e && e.preventDefault(); document.getElementById('register-form').style.display='none'; document.getElementById('login-form').style.display=''; document.getElementById('auth-error').style.display='none'; }
+function showAuthError(msg) { const el=document.getElementById('auth-error'); el.textContent=msg; el.style.display='block'; }
+
+async function doLogin() {
+  const email = document.getElementById('l-email').value.trim();
+  const pass  = document.getElementById('l-password').value;
+  if (!email||!pass) { showAuthError('Preencha email e senha.'); return; }
+  try {
+    const r = await fetch(API+'/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,password:pass}) });
+    const d = await r.json();
+    if (!r.ok) { showAuthError(d.detail || 'Erro ao entrar.'); return; }
+    setToken(d.token);
+    currentUser = { email: d.email, name: d.name };
+    onLoggedIn();
+  } catch(e) { showAuthError('Erro de conexão: ' + e.message); }
+}
+
+async function doRegister() {
+  const name  = document.getElementById('r-name').value.trim();
+  const email = document.getElementById('r-email').value.trim();
+  const pass  = document.getElementById('r-password').value;
+  if (!name||!email||!pass) { showAuthError('Preencha todos os campos.'); return; }
+  try {
+    const r = await fetch(API+'/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name,email,password:pass}) });
+    const d = await r.json();
+    if (!r.ok) { showAuthError(d.detail || 'Erro ao criar conta.'); return; }
+    setToken(d.token);
+    currentUser = { email: d.email, name: d.name };
+    onLoggedIn();
+  } catch(e) { showAuthError('Erro de conexão: ' + e.message); }
+}
+
+function doLogout() {
+  clearToken(); currentUser = null;
+  if (es) { es.close(); es = null; }
+  document.getElementById('login-overlay').style.display = 'flex';
+  showLogin();
+}
+
+async function tryAutoLogin() {
+  if (!getToken()) return false;
+  try {
+    const r = await apiFetch('/auth/me');
+    if (!r || !r.ok) return false;
+    const d = await r.json();
+    currentUser = d;
+    return true;
+  } catch { return false; }
+}
+
+async function onLoggedIn() {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('user-name').textContent  = currentUser.name  || '';
+  document.getElementById('user-email').textContent = currentUser.email || '';
+  await Promise.all([loadInstructions(), loadApps(), loadQueue(), loadAiConfig()]);
+  checkConn();
+  startSSE();
+}
 
 // ━━━━━━━━━━━━━━━━━━ INIT ━━━━━━━━━━━━━━━━━━
 window.onload = async () => {
-  checkConn();
-  await loadInstructions();
-  await loadQueue();
-  startSSE();
+  updateModelOptions();
+  const ok = await tryAutoLogin();
+  if (ok) { onLoggedIn(); }
 };
 
 // ━━━━━━━━━━━━━━━━━━ CONEXAO ━━━━━━━━━━━━━━━━━━
 async function checkConn() {
   try {
-    const r = await fetch(API + '/api/status');
+    const r = await fetch(API+'/api/status');
     setConn(r.ok);
   } catch { setConn(false); }
   setTimeout(checkConn, 10000);
 }
 function setConn(ok) {
-  document.getElementById('conn-dot').className  = 'conn-dot ' + (ok ? 'ok' : 'err');
-  document.getElementById('conn-label').textContent = ok ? 'Conectado ao servidor' : 'Sem conexao com servidor';
+  document.getElementById('conn-dot').className = 'conn-dot ' + (ok?'ok':'err');
+  document.getElementById('conn-label').textContent = ok ? 'Conectado ao servidor' : 'Sem conexão';
 }
 
 // ━━━━━━━━━━━━━━━━━━ SSE ━━━━━━━━━━━━━━━━━━
 function startSSE() {
   if (es) es.close();
-  es = new EventSource(API + '/api/events');
+  es = new EventSource(API+'/api/events');
   es.onmessage = e => {
-    try {
-      const d = JSON.parse(e.data);
-      if (d.type === 'heartbeat') return;
-      handleSSE(d);
-    } catch {}
+    try { const d=JSON.parse(e.data); if(d.type!=='heartbeat') handleSSE(d); } catch {}
   };
   es.onerror = () => { setTimeout(startSSE, 5000); };
 }
@@ -249,265 +507,363 @@ function handleSSE(d) {
     loadQueue();
     if (document.getElementById('pane-historico').classList.contains('active')) loadHistory();
     if (document.getElementById('pane-contexto').classList.contains('active')) loadContext();
-    toast('Run finalizado: ' + d.passed + ' OK / ' + d.failed + ' falhas');
+    toast('✅ Run finalizado: ' + d.passed + ' OK / ' + d.failed + ' falhas');
   } else if (d.type === 'started' || d.type === 'progress') {
     bar.classList.add('visible');
-    document.getElementById('status-suite').textContent = d.suite || d.label || 'Rodando...';
-    const total = (d.passed||0) + (d.failed||0) + (d.warned||0);
-    const pct   = total > 0 ? Math.min(total * 3, 100) : 5;
-    document.getElementById('progress-fill').style.width = pct + '%';
-    document.getElementById('status-counts').textContent =
-      `${d.passed||0} OK  ${d.failed||0} falhas  ${d.warned||0} avisos`;
+    const appName = d.app_name ? ` [${d.app_name}]` : '';
+    document.getElementById('status-suite').textContent = (d.suite||d.label||'Rodando...') + appName;
+    const total = (d.passed||0)+(d.failed||0)+(d.warned||0);
+    document.getElementById('progress-fill').style.width = Math.min(total*3,100)+'%';
+    document.getElementById('status-counts').textContent = `${d.passed||0} OK  ${d.failed||0} falhas  ${d.warned||0} avisos`;
   }
 }
 
 // ━━━━━━━━━━━━━━━━━━ TABS ━━━━━━━━━━━━━━━━━━
 function switchTab(id) {
-  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('pane-' + id).classList.add('active');
-  document.getElementById('tab-' + id).classList.add('active');
-  if (id === 'historico') loadHistory();
-  if (id === 'contexto')  loadContext();
-  if (id === 'fila')      loadQueue();
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pane-'+id).classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  if (id==='historico') loadHistory();
+  if (id==='contexto')  loadContext();
+  if (id==='fila')      loadQueue();
+  if (id==='config')    loadAiConfig();
 }
 
 // ━━━━━━━━━━━━━━━━━━ INSTRUCOES ━━━━━━━━━━━━━━━━━━
 async function loadInstructions() {
   try {
-    const r = await fetch(API + '/api/instructions');
-    if (!r.ok) return;
+    const r = await apiFetch('/api/instructions');
+    if (!r||!r.ok) return;
     const d = await r.json();
-    state.general = d.general || [];
-    state.pages   = d.pages   || [];
-    state.flows   = d.flows   || [];
-    renderAll();
-    updateBadges();
+    state.general = d.general||[]; state.pages=d.pages||[]; state.flows=d.flows||[];
+    renderAll(); updateBadges();
   } catch {}
 }
-
 async function saveInstructions() {
   try {
-    const r = await fetch(API + '/api/instructions', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ general: state.general, pages: state.pages, flows: state.flows }),
-    });
-    if (r.ok) toast('Salvo no Redis!');
-    else      toast('Erro ao salvar');
-  } catch(e) { toast('Erro: ' + e.message); }
+    const r = await apiFetch('/api/instructions', { method:'POST', body:JSON.stringify({general:state.general,pages:state.pages,flows:state.flows}) });
+    if (r&&r.ok) toast('💾 Salvo!');
+    else toast('Erro ao salvar');
+  } catch(e) { toast('Erro: '+e.message); }
 }
-
-// ━━━━━━━━━━━━━━━━━━ BADGES ━━━━━━━━━━━━━━━━━━
 function updateBadges() {
   document.getElementById('badge-geral').textContent   = state.general.length;
   document.getElementById('badge-paginas').textContent = state.pages.length;
   document.getElementById('badge-fluxos').textContent  = state.flows.length;
+  document.getElementById('badge-apps').textContent    = userApps.length;
 }
 
 // ━━━━━━━━━━━━━━━━━━ GERAIS ━━━━━━━━━━━━━━━━━━
 function addGeral() {
-  const text = document.getElementById('input-geral').value.trim();
-  const sev  = document.getElementById('sev-geral').value;
-  if (!text) { toast('Digite uma instrucao'); return; }
-  state.general.push({ text, severity: sev });
-  document.getElementById('input-geral').value = '';
+  const text=document.getElementById('input-geral').value.trim();
+  const sev=document.getElementById('sev-geral').value;
+  if (!text) { toast('Digite uma instrução'); return; }
+  state.general.push({text,severity:sev});
+  document.getElementById('input-geral').value='';
   renderGeral(); updateBadges();
 }
 function removeGeral(i) { state.general.splice(i,1); renderGeral(); updateBadges(); }
 function renderGeral() {
-  const el = document.getElementById('list-geral');
-  if (!state.general.length) { el.innerHTML = '<div class="empty"><div class="emoji">💭</div><p>Nenhuma instrucao ainda.</p></div>'; return; }
-  el.innerHTML = state.general.map((g,i) => `
-    <div class="card" style="display:flex;align-items:flex-start;gap:12px">
-      <span class="sev sev-${g.severity}">${{alto:'🔴 Crítico',medio:'🟡 Médio',baixo:'🟢 Info'}[g.severity]}</span>
-      <span style="flex:1;font-size:.88rem">${esc(g.text)}</span>
-      <button class="btn btn-danger btn-icon btn-sm" onclick="removeGeral(${i})">✕</button>
-    </div>`).join('');
+  const el=document.getElementById('list-geral');
+  if (!state.general.length) { el.innerHTML='<div class="empty"><div class="emoji">💭</div><p>Nenhuma instrução ainda.</p></div>'; return; }
+  const labels={alto:'🔴 Crítico',medio:'🟡 Médio',baixo:'🟢 Info'};
+  el.innerHTML=state.general.map((g,i)=>`<div class="card" style="display:flex;align-items:flex-start;gap:12px">
+    <span class="sev sev-${g.severity}">${labels[g.severity]||g.severity}</span>
+    <span style="flex:1;font-size:.87rem">${esc(g.text)}</span>
+    <button class="btn btn-danger btn-icon btn-sm" onclick="removeGeral(${i})">✕</button>
+  </div>`).join('');
 }
 
 // ━━━━━━━━━━━━━━━━━━ PAGINAS ━━━━━━━━━━━━━━━━━━
 function addPagina() {
-  const name = document.getElementById('pg-name').value.trim();
-  const path = document.getElementById('pg-path').value.trim();
-  const raw  = document.getElementById('pg-instructions').value.trim();
-  const ctx  = document.getElementById('pg-context').value.trim();
-  if (!name||!path||!raw) { toast('Preencha nome, path e instrucoes'); return; }
-  state.pages.push({ name, path, instructions: raw.split('\n').filter(Boolean), context: ctx });
-  ['pg-name','pg-path','pg-instructions','pg-context'].forEach(id => document.getElementById(id).value='');
+  const name=document.getElementById('pg-name').value.trim();
+  const path=document.getElementById('pg-path').value.trim();
+  const raw=document.getElementById('pg-instructions').value.trim();
+  const ctx=document.getElementById('pg-context').value.trim();
+  if (!name||!path||!raw) { toast('Preencha nome, path e instruções'); return; }
+  state.pages.push({name,path,instructions:raw.split('\n').filter(Boolean),context:ctx});
+  ['pg-name','pg-path','pg-instructions','pg-context'].forEach(id=>document.getElementById(id).value='');
   renderPaginas(); updateBadges();
 }
 function removePagina(i) { state.pages.splice(i,1); renderPaginas(); updateBadges(); }
 function renderPaginas() {
-  const el = document.getElementById('list-paginas');
-  if (!state.pages.length) { el.innerHTML = '<div class="empty"><div class="emoji">📄</div><p>Nenhuma pagina configurada.</p></div>'; return; }
-  el.innerHTML = state.pages.map((p,i) => `
-    <div class="card">
-      <div class="card-header">
-        <div><div class="card-title">${esc(p.name)}</div><code style="font-size:.76rem;color:var(--accent)">${esc(p.path)}</code></div>
-        <div class="card-actions"><button class="btn btn-danger btn-icon btn-sm" onclick="removePagina(${i})">✕</button></div>
-      </div>
-      <ul style="list-style:none">${p.instructions.map((s,j)=>`<li class="step-item"><span class="step-num">${j+1}</span><span class="step-text">${esc(s)}</span></li>`).join('')}</ul>
-      ${p.context?`<p class="hint" style="margin-top:8px"><strong>Contexto:</strong> ${esc(p.context)}</p>`:''}
-    </div>`).join('');
+  const el=document.getElementById('list-paginas');
+  if (!state.pages.length) { el.innerHTML='<div class="empty"><div class="emoji">📄</div><p>Nenhuma página configurada.</p></div>'; return; }
+  el.innerHTML=state.pages.map((p,i)=>`<div class="card">
+    <div class="card-header">
+      <div><div class="card-title">${esc(p.name)}</div><code style="font-size:.74rem;color:var(--accent)">${esc(p.path)}</code></div>
+      <button class="btn btn-danger btn-icon btn-sm" onclick="removePagina(${i})">✕</button>
+    </div>
+    <ul style="list-style:none">${p.instructions.map((s,j)=>`<li class="step-item"><span class="step-num">${j+1}</span><span class="step-text">${esc(s)}</span></li>`).join('')}</ul>
+    ${p.context?`<p class="hint" style="margin-top:8px"><strong>Contexto:</strong> ${esc(p.context)}</p>`:''}
+  </div>`).join('');
 }
 
 // ━━━━━━━━━━━━━━━━━━ FLUXOS ━━━━━━━━━━━━━━━━━━
 function addFluxo() {
-  const name  = document.getElementById('fl-name').value.trim();
-  const crit  = document.getElementById('fl-criticidade').value;
-  const desc  = document.getElementById('fl-desc').value.trim();
-  const rawS  = document.getElementById('fl-steps').value.trim();
-  const rawC  = document.getElementById('fl-checks').value.trim();
-  if (!name||!desc||!rawS) { toast('Preencha nome, descricao e etapas'); return; }
-  state.flows.push({ name, criticidade: crit, desc, steps: rawS.split('\n').filter(Boolean), checks: rawC.split('\n').filter(Boolean) });
-  ['fl-name','fl-desc','fl-steps','fl-checks'].forEach(id => document.getElementById(id).value='');
+  const name=document.getElementById('fl-name').value.trim();
+  const crit=document.getElementById('fl-criticidade').value;
+  const desc=document.getElementById('fl-desc').value.trim();
+  const rawS=document.getElementById('fl-steps').value.trim();
+  const rawC=document.getElementById('fl-checks').value.trim();
+  if (!name||!desc||!rawS) { toast('Preencha nome, descrição e etapas'); return; }
+  state.flows.push({name,criticidade:crit,desc,steps:rawS.split('\n').filter(Boolean),checks:rawC.split('\n').filter(Boolean)});
+  ['fl-name','fl-desc','fl-steps','fl-checks'].forEach(id=>document.getElementById(id).value='');
   renderFluxos(); updateBadges();
 }
 function removeFluxo(i) { state.flows.splice(i,1); renderFluxos(); updateBadges(); }
 function renderFluxos() {
-  const el = document.getElementById('list-fluxos');
-  if (!state.flows.length) { el.innerHTML = '<div class="empty"><div class="emoji">🔄</div><p>Nenhum fluxo configurado.</p></div>'; return; }
-  const cl = {critico:'sev-alto',importante:'sev-medio',informativo:'sev-baixo'};
-  el.innerHTML = state.flows.map((f,i) => `
-    <div class="card">
-      <div class="card-header">
-        <div><div class="card-title">${esc(f.name)}</div><span class="sev ${cl[f.criticidade]}" style="margin-top:4px;display:inline-block">${f.criticidade}</span></div>
-        <div class="card-actions"><button class="btn btn-danger btn-icon btn-sm" onclick="removeFluxo(${i})">✕</button></div>
-      </div>
-      <p style="font-size:.84rem;color:var(--muted);margin-bottom:10px">${esc(f.desc)}</p>
-      <ul style="list-style:none">${f.steps.map((s,j)=>`<li class="step-item"><span class="step-num">${j+1}</span><span class="step-text">${esc(s)}</span></li>`).join('')}</ul>
-    </div>`).join('');
+  const el=document.getElementById('list-fluxos');
+  if (!state.flows.length) { el.innerHTML='<div class="empty"><div class="emoji">🔄</div><p>Nenhum fluxo configurado.</p></div>'; return; }
+  const cl={critico:'sev-alto',importante:'sev-medio',informativo:'sev-baixo'};
+  el.innerHTML=state.flows.map((f,i)=>`<div class="card">
+    <div class="card-header">
+      <div><div class="card-title">${esc(f.name)}</div><span class="sev ${cl[f.criticidade]}" style="margin-top:4px;display:inline-block">${f.criticidade}</span></div>
+      <button class="btn btn-danger btn-icon btn-sm" onclick="removeFluxo(${i})">✕</button>
+    </div>
+    <p style="font-size:.83rem;color:var(--muted);margin-bottom:8px">${esc(f.desc)}</p>
+    <ul style="list-style:none">${f.steps.map((s,j)=>`<li class="step-item"><span class="step-num">${j+1}</span><span class="step-text">${esc(s)}</span></li>`).join('')}</ul>
+  </div>`).join('');
+}
+
+// ━━━━━━━━━━━━━━━━━━ APPS ━━━━━━━━━━━━━━━━━━
+function toggleAppLogin() {
+  document.getElementById('app-login-fields').style.display = document.getElementById('app-login-enabled').checked?'':'none';
+}
+function toggleEditLogin() {
+  document.getElementById('edit-login-fields').style.display = document.getElementById('edit-app-login').checked?'':'none';
+}
+
+async function loadApps() {
+  try {
+    const r = await apiFetch('/api/apps');
+    if (!r||!r.ok) return;
+    userApps = await r.json();
+    renderApps();
+    updateBadges();
+    updateAppDropdown();
+  } catch {}
+}
+
+async function addApp() {
+  const name = document.getElementById('app-name').value.trim();
+  const url  = document.getElementById('app-url').value.trim();
+  const loginEnabled = document.getElementById('app-login-enabled').checked;
+  const username = document.getElementById('app-username').value.trim();
+  const password = document.getElementById('app-password').value;
+  if (!name||!url) { toast('Preencha nome e URL'); return; }
+  try {
+    const r = await apiFetch('/api/apps', { method:'POST', body:JSON.stringify({name,url,login_enabled:loginEnabled,username,password}) });
+    if (!r||!r.ok) { toast('Erro ao salvar app'); return; }
+    ['app-name','app-url','app-username','app-password'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('app-login-enabled').checked=false;
+    toggleAppLogin();
+    await loadApps();
+    toast('✅ Aplicação adicionada!');
+  } catch(e) { toast('Erro: '+e.message); }
+}
+
+async function deleteApp(id) {
+  if (!confirm('Remover esta aplicação?')) return;
+  await apiFetch('/api/apps/'+id, {method:'DELETE'});
+  await loadApps();
+  toast('Aplicação removida.');
+}
+
+function openEditModal(app) {
+  document.getElementById('edit-app-id').value       = app.id;
+  document.getElementById('edit-app-name').value     = app.name;
+  document.getElementById('edit-app-url').value      = app.url;
+  document.getElementById('edit-app-login').checked  = app.login_enabled||false;
+  document.getElementById('edit-app-username').value = app.username||'';
+  document.getElementById('edit-app-password').value = app.password||'';
+  toggleEditLogin();
+  document.getElementById('edit-modal').classList.add('open');
+}
+function closeEditModal() { document.getElementById('edit-modal').classList.remove('open'); }
+
+async function saveEditApp() {
+  const id = document.getElementById('edit-app-id').value;
+  const name = document.getElementById('edit-app-name').value.trim();
+  const url  = document.getElementById('edit-app-url').value.trim();
+  const loginEnabled = document.getElementById('edit-app-login').checked;
+  const username = document.getElementById('edit-app-username').value.trim();
+  const password = document.getElementById('edit-app-password').value;
+  if (!name||!url) { toast('Preencha nome e URL'); return; }
+  await apiFetch('/api/apps/'+id, { method:'PUT', body:JSON.stringify({name,url,login_enabled:loginEnabled,username,password}) });
+  closeEditModal();
+  await loadApps();
+  toast('✅ Aplicação atualizada!');
+}
+
+function renderApps() {
+  const el = document.getElementById('list-apps');
+  if (!userApps.length) {
+    el.innerHTML='<div class="empty"><div class="emoji">🌐</div><p>Nenhuma aplicação cadastrada ainda.<br>Adicione uma acima para começar.</p></div>';
+    return;
+  }
+  el.innerHTML = userApps.map(a=>`<div class="app-card">
+    <div class="app-icon">🌐</div>
+    <div class="app-info">
+      <div class="app-name">${esc(a.name)}</div>
+      <div class="app-url">${esc(a.url)}</div>
+      <span class="app-badge ${a.login_enabled?'badge-login':'badge-no-login'}">${a.login_enabled?'🔐 Com login':'🔓 Sem login'}</span>
+    </div>
+    <div style="display:flex;gap:6px;flex-shrink:0">
+      <button class="btn btn-secondary btn-sm" onclick='openEditModal(${JSON.stringify(a)})'>✏️ Editar</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteApp('${a.id}')">🗑</button>
+    </div>
+  </div>`).join('');
+}
+
+function updateAppDropdown() {
+  const sel = document.getElementById('queue-app');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Selecione uma aplicação —</option>' +
+    userApps.map(a=>`<option value="${a.id}">${esc(a.name)} — ${esc(a.url)}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+
+// ━━━━━━━━━━━━━━━━━━ AI CONFIG ━━━━━━━━━━━━━━━━━━
+function updateModelOptions() {
+  const prov = document.getElementById('cfg-provider').value;
+  const sel  = document.getElementById('cfg-model');
+  const prev = sel.value;
+  sel.innerHTML = (MODELS[prov]||MODELS.openai).map(m=>`<option value="${m.v}">${m.l}</option>`).join('');
+  if (prev && [...sel.options].some(o=>o.value===prev)) sel.value=prev;
+}
+
+async function loadAiConfig() {
+  try {
+    const r = await apiFetch('/api/ai-config');
+    if (!r||!r.ok) return;
+    const d = await r.json();
+    document.getElementById('cfg-provider').value = d.provider||'openai';
+    updateModelOptions();
+    document.getElementById('cfg-model').value   = d.model||'gpt-4o-mini';
+    document.getElementById('cfg-api-key').value = d.api_key||'';
+  } catch {}
+}
+
+async function saveAiConfig() {
+  const provider = document.getElementById('cfg-provider').value;
+  const model    = document.getElementById('cfg-model').value;
+  const api_key  = document.getElementById('cfg-api-key').value;
+  const statusEl = document.getElementById('cfg-status');
+  statusEl.textContent = 'Salvando...';
+  try {
+    const r = await apiFetch('/api/ai-config', { method:'PUT', body:JSON.stringify({provider,model,api_key}) });
+    if (r&&r.ok) { toast('✅ Configuração de IA salva!'); statusEl.textContent='Salvo!'; setTimeout(()=>statusEl.textContent='',3000); }
+    else { statusEl.textContent='Erro ao salvar'; }
+  } catch(e) { statusEl.textContent='Erro: '+e.message; }
 }
 
 // ━━━━━━━━━━━━━━━━━━ FILA ━━━━━━━━━━━━━━━━━━
 async function loadQueue() {
   try {
-    const r = await fetch(API + '/api/queue');
-    if (!r.ok) return;
+    const r = await apiFetch('/api/queue');
+    if (!r||!r.ok) return;
     const d = await r.json();
-    document.getElementById('badge-fila').textContent = d.length || 0;
+    document.getElementById('badge-fila').textContent = d.length||0;
     const el = document.getElementById('queue-list');
-    if (!d.jobs || !d.jobs.length) {
-      el.innerHTML = '<div class="empty" style="padding:24px"><div class="emoji">✅</div><p>Fila vazia</p></div>'; return;
-    }
-    el.innerHTML = d.jobs.map((j,i) => `
-      <div class="job-item">
-        <span class="job-type-badge">${j.type||'full'}</span>
-        <span style="flex:1">${esc(j.label||'Run')}</span>
-        <span style="font-size:.75rem;color:var(--muted)">${j.queued_at ? new Date(j.queued_at*1000).toLocaleTimeString('pt-BR') : ''}</span>
-      </div>`).join('');
+    if (!d.jobs||!d.jobs.length) { el.innerHTML='<div class="empty" style="padding:20px"><div class="emoji">✅</div><p>Fila vazia</p></div>'; return; }
+    el.innerHTML = d.jobs.map(j=>`<div class="job-item">
+      <span class="job-type-badge">${j.type||'full'}</span>
+      <span style="flex:1">${esc(j.label||'Run')}</span>
+      <span style="font-size:.73rem;color:var(--muted)">${j.queued_at?new Date(j.queued_at*1000).toLocaleTimeString('pt-BR'):''}</span>
+    </div>`).join('');
   } catch {}
 }
 
 async function enqueueRun(type, label) {
+  const app_id = document.getElementById('queue-app')?.value || '';
   try {
     await saveInstructions();
-    const r = await fetch(API + '/api/queue', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ type, label }),
-    });
-    if (r.ok) { toast('Job enfileirado!'); loadQueue(); }
-  } catch(e) { toast('Erro: ' + e.message); }
+    const r = await apiFetch('/api/queue', { method:'POST', body:JSON.stringify({type, label, app_id}) });
+    if (r&&r.ok) { toast('⏳ Job enfileirado!'); loadQueue(); }
+    else toast('Erro ao enfileirar');
+  } catch(e) { toast('Erro: '+e.message); }
 }
 
 function enqueueFromForm() {
-  const type  = document.getElementById('queue-type').value;
-  const label = document.getElementById('queue-label').value.trim() || 'Run agendado';
+  const type   = document.getElementById('queue-type').value;
+  const label  = document.getElementById('queue-label').value.trim() || 'Run agendado';
+  const app_id = document.getElementById('queue-app').value;
+  if (!app_id) { toast('Selecione uma aplicação primeiro'); switchTab('apps'); return; }
   enqueueRun(type, label);
 }
 
 async function clearQueue() {
   if (!confirm('Limpar toda a fila?')) return;
-  await fetch(API + '/api/queue', { method:'DELETE' });
+  await apiFetch('/api/queue', {method:'DELETE'});
   loadQueue(); toast('Fila limpa.');
 }
 
-// ━━━━━━━━━━━━━━━━━━ HISTORICO ━━━━━━━━━━━━━━━━━━
+// ━━━━━━━━━━━━━━━━━━ HISTÓRICO ━━━━━━━━━━━━━━━━━━
 async function loadHistory() {
   try {
-    const r = await fetch(API + '/api/history?limit=20');
-    if (!r.ok) return;
+    const r = await apiFetch('/api/history?limit=20');
+    if (!r||!r.ok) return;
     const d = await r.json();
     const el = document.getElementById('history-list');
-    if (!d.runs || !d.runs.length) {
-      el.innerHTML = '<div class="empty"><div class="emoji">📊</div><p>Nenhum run ainda. Execute um teste para ver o historico.</p></div>'; return;
-    }
-    el.innerHTML = d.runs.map(run => {
-      const dt = run.started_at ? new Date(run.started_at*1000).toLocaleString('pt-BR') : '';
-      const dur = run.duration ? `${run.duration}s` : '';
-      const pct = run.total ? Math.round(run.passed/run.total*100) : 0;
-      const color = run.failed > 0 ? 'var(--red)' : run.warned > 0 ? 'var(--yellow)' : 'var(--green)';
+    if (!d.runs||!d.runs.length) { el.innerHTML='<div class="empty"><div class="emoji">📊</div><p>Nenhum run ainda.</p></div>'; return; }
+    el.innerHTML = d.runs.map(run=>{
+      const dt  = run.started_at ? new Date(run.started_at*1000).toLocaleString('pt-BR') : '';
+      const dur = run.duration   ? run.duration+'s' : '';
+      const pct = run.total      ? Math.round(run.passed/run.total*100) : 0;
+      const color = run.failed>0 ? 'var(--red)' : run.warned>0 ? 'var(--yellow)' : 'var(--green)';
       return `<div class="run-card">
         <div class="run-header">
           <div>
-            <div class="run-label">${esc(run.label||'Run')}</div>
+            <div class="run-label">${esc(run.label||'Run')}${run.app_name?` <span style="font-size:.76rem;color:var(--muted)">[${esc(run.app_name)}]</span>`:''}</div>
             <div class="run-meta">${dt} &nbsp;·&nbsp; ${dur}</div>
           </div>
-          <div style="font-size:1.4rem;font-weight:700;color:${color}">${pct}%</div>
+          <div style="font-size:1.3rem;font-weight:700;color:${color}">${pct}%</div>
         </div>
         <div class="run-stats">
           <span class="stat-pill stat-pass">✅ ${run.passed} OK</span>
           <span class="stat-pill stat-fail">❌ ${run.failed} falhas</span>
           <span class="stat-pill stat-warn">⚠ ${run.warned} avisos</span>
-          <span style="font-size:.75rem;color:var(--muted)">${run.total} total</span>
+          <span style="font-size:.73rem;color:var(--muted)">${run.total} total</span>
         </div>
       </div>`;
     }).join('');
   } catch {}
 }
 
-// ━━━━━━━━━━━━━━━━━━ CONTEXTO IA ━━━━━━━━━━━━━━━━━━
+// ━━━━━━━━━━━━━━━━━━ CONTEXTO ━━━━━━━━━━━━━━━━━━
 async function loadContext() {
   try {
-    const r = await fetch(API + '/api/context');
-    if (!r.ok) return;
+    const r = await apiFetch('/api/context');
+    if (!r||!r.ok) return;
     const d = await r.json();
     const el = document.getElementById('context-content');
-    const ctx = d.accumulated || {};
-    const hi  = d.high_risk   || [];
-
+    const ctx = d.accumulated||{};
+    const hi  = d.high_risk||[];
     let html = '';
-
-    if (ctx.summary) {
-      html += `<div class="card"><strong style="color:var(--accent)">📝 Resumo</strong><p style="margin-top:8px;font-size:.88rem">${esc(ctx.summary)}</p></div>`;
-    }
-
-    if (ctx.known_issues && ctx.known_issues.length) {
-      html += `<div class="card"><strong style="color:var(--red)">⚠ Problemas conhecidos</strong><ul style="margin-top:8px;padding-left:18px;font-size:.86rem;line-height:2">${ctx.known_issues.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`;
-    }
-
-    if (ctx.stable_areas && ctx.stable_areas.length) {
-      html += `<div class="card"><strong style="color:var(--green)">✅ Áreas estáveis</strong><ul style="margin-top:8px;padding-left:18px;font-size:.86rem;line-height:2">${ctx.stable_areas.map(a=>`<li>${esc(a)}</li>`).join('')}</ul></div>`;
-    }
-
-    if (hi.length) {
-      html += `<div class="card"><strong style="color:var(--yellow)">🎯 Páginas de alto risco (mais falhas)</strong><ul style="margin-top:8px;list-style:none">`;
-      html += hi.map(([path,count])=>`<li class="step-item"><span class="step-num">${count}</span><span class="step-text"><code>${esc(path)}</code></span></li>`).join('');
-      html += '</ul></div>';
-    }
-
-    if (!html) {
-      html = '<div class="empty"><div class="emoji">🧠</div><p>Nenhum contexto acumulado ainda.<br>Execute alguns testes para a IA aprender sobre sua aplicacao.</p></div>';
-    }
-
-    el.innerHTML = html;
-  } catch(e) { document.getElementById('context-content').innerHTML = `<p style="color:var(--muted)">Erro: ${e.message}</p>`; }
+    if (ctx.summary) html+=`<div class="card"><strong style="color:var(--accent)">📝 Resumo</strong><p style="margin-top:8px;font-size:.87rem">${esc(ctx.summary)}</p></div>`;
+    if (ctx.known_issues&&ctx.known_issues.length) html+=`<div class="card"><strong style="color:var(--red)">⚠ Problemas conhecidos</strong><ul style="margin-top:8px;padding-left:18px;font-size:.85rem;line-height:2">${ctx.known_issues.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`;
+    if (ctx.stable_areas&&ctx.stable_areas.length) html+=`<div class="card"><strong style="color:var(--green)">✅ Áreas estáveis</strong><ul style="margin-top:8px;padding-left:18px;font-size:.85rem;line-height:2">${ctx.stable_areas.map(a=>`<li>${esc(a)}</li>`).join('')}</ul></div>`;
+    if (hi.length) html+=`<div class="card"><strong style="color:var(--yellow)">🎯 Páginas de alto risco</strong><ul style="margin-top:8px;list-style:none">${hi.map(([p,c])=>`<li class="step-item"><span class="step-num">${c}</span><span class="step-text"><code>${esc(p)}</code></span></li>`).join('')}</ul></div>`;
+    if (!html) html='<div class="empty"><div class="emoji">🧠</div><p>Nenhum contexto acumulado ainda.<br>Execute alguns testes para a IA aprender.</p></div>';
+    el.innerHTML=html;
+  } catch(e) { document.getElementById('context-content').innerHTML=`<p style="color:var(--muted)">Erro: ${e.message}</p>`; }
 }
 
 async function resetContext() {
   if (!confirm('Apagar todo o contexto acumulado?')) return;
-  await fetch(API + '/api/context', { method:'DELETE' });
+  await apiFetch('/api/context',{method:'DELETE'});
   loadContext(); toast('Contexto resetado.');
 }
 
 // ━━━━━━━━━━━━━━━━━━ UTILS ━━━━━━━━━━━━━━━━━━
 function renderAll() { renderGeral(); renderPaginas(); renderFluxos(); }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function toast(msg, ms=2800) {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'), ms);
+function toast(msg,ms=3000) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),ms);
 }
 </script>
 </body>
