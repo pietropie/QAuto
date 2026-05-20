@@ -21,6 +21,8 @@ services:
     restart: always
     expose:
       - "8000"
+    labels:
+      - traefik.docker.network=qvlputo71gfryfwyd2pgxfz2
     environment:
       - REDIS_URL=redis://qauto-redis:6379/0
       - APP_BASE_URL=${APP_BASE_URL}
