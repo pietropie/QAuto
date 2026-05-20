@@ -447,6 +447,29 @@ async def sse_events():
     )
 
 
+
+# ─────────────────────────────────────────────────────────────
+# Debug / Diagnóstico
+# ─────────────────────────────────────────────────────────────
+
+@app.get("/api/debug")
+async def get_debug():
+    """Endpoint de diagnóstico — mostra last_error do worker e estado do Redis."""
+    r = get_client()
+    import time
+    last_error_raw = r.get("qa:worker:last_error")
+    last_error = json.loads(last_error_raw) if last_error_raw else None
+    status = get_run_status(r)
+    queue_len = r.llen("qa:queue")
+    global_hist = r.zcard("qa:history")
+    return {
+        "worker_last_error": last_error,
+        "run_status": status,
+        "queue_length": queue_len,
+        "global_history_count": global_hist,
+        "ts": time.time(),
+    }
+
 # ─────────────────────────────────────────────────────────────
 # Entrypoint local
 # ─────────────────────────────────────────────────────────────

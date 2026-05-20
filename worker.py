@@ -194,6 +194,7 @@ def run_job(job: dict, r):
     from tests import test_navigation, test_forms, test_orders, test_visual, test_custom
 
     run_id  = f"run_{int(time.time())}"
+    _started = False
     config  = load_config()
     config["_job_label"] = job.get("label", "Run")
     user_email = job.get("user_email")
@@ -262,6 +263,7 @@ def run_job(job: dict, r):
 
     reporter = WorkerReporter(run_id, r, config)
 
+    _started = True
     set_run_status(r, {
         "type":    "started",
         "run_id":  run_id,
@@ -285,28 +287,36 @@ def run_job(job: dict, r):
     print(f"  Run ID: {run_id}")
     print(f"{'='*50}")
 
-    pw, browser, context = create_browser(config)
-    page = context.new_page()
-
     try:
-        login(page, config)
-        for key in suites_to_run:
-            if key not in suite_map:
-                continue
-            name, fn = suite_map[key]
-            print(f"\n  >> Suite: {name}")
-            try:
-                fn(page, context)
-            except Exception as e:
-                print(f"  ERRO critico na suite {name}: {e}")
-                traceback.print_exc()
-    finally:
-        context.close()
-        browser.close()
-        pw.stop()
+        pw, browser, context = create_browser(config)
+        page = context.new_page()
+        try:
+            login(page, config)
+            for key in suites_to_run:
+                if key not in suite_map:
+                    continue
+                name, fn = suite_map[key]
+                print(f"\n  >> Suite: {name}")
+                try:
+                    fn(page, context)
+                except Exception as e:
+                    print(f"  ERRO critico na suite {name}: {e}")
+                    traceback.print_exc()
+        finally:
+            context.close()
+            browser.close()
+            pw.stop()
+    except Exception as e:
+        print(f"  [ERRO] Falha ao iniciar browser ou executar testes: {e}")
+        traceback.print_exc()
+        # Registra erro no reporter para aparecer no historico
+        suite = reporter.add_suite("❌ Erro de Execução")
+        reporter.add_result(suite, "Inicializar browser", "FAIL", str(e))
+        # Salva no Redis para diagnostico
+        r.set("qa:worker:last_error", json.dumps({"error": str(e), "run_id": run_id, "ts": time.time()}))
 
     run_result = reporter.finish()
-    # Salva tambem no historico por usuario
+    # Salva no historico global e por usuario
     if user_email:
         try:
             save_user_run_result(r, user_email, run_result)
