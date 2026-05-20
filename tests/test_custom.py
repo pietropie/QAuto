@@ -310,4 +310,10 @@ Identifique riscos, elementos faltando, ou inconsistências que possam quebrar e
 
 def _extract_path_from_step(step_text: str) -> str | None:
     """
-    Tenta extrair um
+    Tenta extrair um    caminho de URL de um texto de instrução de etapa.
+    Ex: "Acesse /produtos/lista e verifique..." -> "/produtos/lista"
+    Retorna None se não encontrar nenhum caminho.
+    """
+    import re
+    m = re.search(r'(/[\w\-/]+)', step_text)
+    return m.group(1) if m else None
