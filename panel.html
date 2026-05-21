@@ -307,7 +307,10 @@ input[type="checkbox"]{width:16px;height:16px;accent-color:var(--primary)}
 
 <!-- PANE: HISTÓRICO -->
 <div class="pane" id="pane-historico">
-  <div class="pane-header"><h2>📊 Histórico de Execuções</h2><p>Últimos runs do seu usuário.</p></div>
+  <div class="pane-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+    <div><h2>📊 Histórico de Execuções</h2><p>Clique em um run para ver o relatório completo com falhas, avisos e prints.</p></div>
+    <button class="btn btn-sm" onclick="loadHistory()" style="flex-shrink:0;margin-top:4px">🔄 Atualizar</button>
+  </div>
   <div id="history-list"></div>
 </div>
 
@@ -1043,35 +1046,158 @@ async function clearQueue() {
 }
 
 // ━━━━━━━━━━━━━━━━━━ HISTÓRICO ━━━━━━━━━━━━━━━━━━
+// ── Histórico ─────────────────────────────────────────────────────────
+
 async function loadHistory() {
   try {
-    const r = await apiFetch('/api/history?limit=20');
+    const r = await apiFetch('/api/history?limit=30');
     if (!r||!r.ok) return;
     const d = await r.json();
     const el = document.getElementById('history-list');
-    if (!d.runs||!d.runs.length) { el.innerHTML='<div class="empty"><div class="emoji">📊</div><p>Nenhum run ainda.</p></div>'; return; }
-    el.innerHTML = d.runs.map(run=>{
-      const dt  = run.started_at ? new Date(run.started_at*1000).toLocaleString('pt-BR') : '';
-      const dur = run.duration   ? run.duration+'s' : '';
-      const pct = run.total      ? Math.round(run.passed/run.total*100) : 0;
-      const color = run.failed>0 ? 'var(--red)' : run.warned>0 ? 'var(--yellow)' : 'var(--green)';
-      return `<div class="run-card">
-        <div class="run-header">
-          <div>
-            <div class="run-label">${esc(run.label||'Run')}${run.app_name?` <span style="font-size:.76rem;color:var(--muted)">[${esc(run.app_name)}]</span>`:''}</div>
-            <div class="run-meta">${dt} &nbsp;·&nbsp; ${dur}</div>
-          </div>
-          <div style="font-size:1.3rem;font-weight:700;color:${color}">${pct}%</div>
+    if (!d.runs||!d.runs.length) {
+      el.innerHTML='<div class="empty"><div class="emoji">📊</div><p>Nenhum run ainda.</p></div>';
+      return;
+    }
+    el.innerHTML = d.runs.map(run => renderRunCard(run)).join('');
+  } catch(e) { console.error('loadHistory', e); }
+}
+
+function renderRunCard(run) {
+  const dt    = run.started_at ? new Date(run.started_at*1000).toLocaleString('pt-BR') : '';
+  const dur   = run.duration   ? run.duration+'s' : '';
+  const pct   = run.total      ? Math.round(run.passed/run.total*100) : 0;
+  const color = run.failed>0   ? 'var(--red)' : run.warned>0 ? 'var(--yellow)' : 'var(--green)';
+  const rid   = esc(run.id||'');
+  const hasSuites = run.suites && run.suites.length > 0;
+
+  return `<div class="run-card" id="card-${rid}">
+    <div class="run-header" onclick="toggleRunDetail('${rid}')" style="cursor:pointer">
+      <div style="flex:1;min-width:0">
+        <div class="run-label" style="display:flex;align-items:center;gap:8px">
+          ${esc(run.label||'Run')}
+          ${run.app_name?`<span style="font-size:.76rem;color:var(--muted);font-weight:400">[${esc(run.app_name)}]</span>`:''}
         </div>
-        <div class="run-stats">
-          <span class="stat-pill stat-pass">✅ ${run.passed} OK</span>
-          <span class="stat-pill stat-fail">❌ ${run.failed} falhas</span>
-          <span class="stat-pill stat-warn">⚠ ${run.warned} avisos</span>
-          <span style="font-size:.73rem;color:var(--muted)">${run.total} total</span>
-        </div>
-      </div>`;
-    }).join('');
-  } catch {}
+        <div class="run-meta">${dt}&nbsp;·&nbsp;${dur}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
+        <div style="font-size:1.3rem;font-weight:700;color:${color}">${pct}%</div>
+        <div id="chevron-${rid}" style="font-size:1rem;transition:transform .2s">▼</div>
+      </div>
+    </div>
+    <div class="run-stats">
+      <span class="stat-pill stat-pass">✅ ${run.passed||0} OK</span>
+      <span class="stat-pill stat-fail">❌ ${run.failed||0} falhas</span>
+      <span class="stat-pill stat-warn">⚠ ${run.warned||0} avisos</span>
+      <span style="font-size:.73rem;color:var(--muted)">${run.total||0} total</span>
+    </div>
+    ${hasSuites ? `<div id="detail-${rid}" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+      ${renderRunDetail(run)}
+    </div>` : ''}
+  </div>`;
+}
+
+function toggleRunDetail(rid) {
+  const detail  = document.getElementById('detail-'+rid);
+  const chevron = document.getElementById('chevron-'+rid);
+  if (!detail) return;
+  const open = detail.style.display !== 'none';
+  detail.style.display = open ? 'none' : 'block';
+  if (chevron) chevron.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+function renderRunDetail(run) {
+  // Collect all tests across suites, tagged with suite name
+  const all = [];
+  (run.suites||[]).forEach(suite => {
+    (suite.tests||[]).forEach(t => all.push({...t, _suite: suite.name}));
+  });
+
+  const fails  = all.filter(t => t.status === 'FAIL');
+  const warns  = all.filter(t => t.status === 'WARN');
+  const passes = all.filter(t => t.status === 'PASS');
+
+  let html = `<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">`;
+
+  // Filter tabs
+  const tabs = [
+    {key:'fail', label:`❌ Falhas (${fails.length})`,  color:'var(--red)',    items: fails},
+    {key:'warn', label:`⚠ Avisos (${warns.length})`,  color:'var(--yellow)', items: warns},
+    {key:'pass', label:`✅ OK (${passes.length})`,     color:'var(--green)',  items: passes},
+  ];
+
+  const rid = esc(run.id||'');
+  tabs.forEach((tab,i) => {
+    html += `<button class="btn btn-sm" id="htab-${rid}-${tab.key}"
+      onclick="switchHistTab('${rid}','${tab.key}')"
+      style="font-size:.78rem;padding:4px 10px;border:1px solid ${tab.color};color:${tab.color};background:${i===0?tab.color+'22':'transparent'}"
+      >${tab.label}</button>`;
+  });
+  html += `</div>`;
+
+  // Panels
+  tabs.forEach((tab,i) => {
+    html += `<div id="hpanel-${rid}-${tab.key}" style="display:${i===0?'block':'none'}">`;
+    if (!tab.items.length) {
+      html += `<p style="color:var(--muted);font-size:.85rem;padding:8px 0">Nenhum item nesta categoria.</p>`;
+    } else {
+      tab.items.forEach(t => { html += renderTestItem(t, rid); });
+    }
+    html += `</div>`;
+  });
+
+  return html;
+}
+
+function switchHistTab(rid, key) {
+  ['fail','warn','pass'].forEach(k => {
+    const panel = document.getElementById(`hpanel-${rid}-${k}`);
+    const tab   = document.getElementById(`htab-${rid}-${k}`);
+    if (!panel||!tab) return;
+    const colors = {fail:'var(--red)',warn:'var(--yellow)',pass:'var(--green)'};
+    const active = k === key;
+    panel.style.display = active ? 'block' : 'none';
+    tab.style.background = active ? colors[k]+'22' : 'transparent';
+  });
+}
+
+function renderTestItem(t, rid) {
+  const icon = t.status==='FAIL' ? '❌' : t.status==='WARN' ? '⚠️' : '✅';
+  const borderColor = t.status==='FAIL' ? 'var(--red)' : t.status==='WARN' ? 'var(--yellow)' : 'var(--green)';
+  const ssId = `ss-${rid}-${Math.random().toString(36).slice(2,8)}`;
+  const hasShot = t.screenshot && t.screenshot.startsWith('data:');
+
+  let html = `<div style="border-left:3px solid ${borderColor};margin:6px 0;padding:8px 12px;background:var(--surface-alt,rgba(255,255,255,.03));border-radius:0 6px 6px 0">
+    <div style="display:flex;align-items:flex-start;gap:8px">
+      <span style="flex-shrink:0">${icon}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.88rem;font-weight:500;word-break:break-word">${esc(t.name||'')}</div>
+        ${t._suite?`<div style="font-size:.73rem;color:var(--muted);margin-bottom:3px">Suite: ${esc(t._suite)}</div>`:''}
+        ${t.message?`<div style="font-size:.82rem;color:var(--muted);margin-top:3px;white-space:pre-wrap;word-break:break-word">${esc(t.message)}</div>`:''}
+        ${t.ai_analysis?`<div style="font-size:.82rem;color:var(--accent);margin-top:4px;font-style:italic">🤖 ${esc(t.ai_analysis)}</div>`:''}
+        ${hasShot ? `<div style="margin-top:8px">
+          <img id="${ssId}" src="${t.screenshot}"
+            style="max-width:100%;border-radius:6px;cursor:zoom-in;border:1px solid var(--border);max-height:180px;object-fit:contain"
+            onclick="expandScreenshot('${ssId}')"
+            title="Clique para expandir" />
+        </div>` : ''}
+      </div>
+      ${t.duration?`<div style="font-size:.73rem;color:var(--muted);flex-shrink:0">${t.duration}s</div>`:''}
+    </div>
+  </div>`;
+  return html;
+}
+
+function expandScreenshot(ssId) {
+  const img = document.getElementById(ssId);
+  if (!img) return;
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out';
+  overlay.onclick = () => document.body.removeChild(overlay);
+  const bigImg = document.createElement('img');
+  bigImg.src = img.src;
+  bigImg.style.cssText = 'max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 4px 40px rgba(0,0,0,.8)';
+  overlay.appendChild(bigImg);
+  document.body.appendChild(overlay);
 }
 
 // ━━━━━━━━━━━━━━━━━━ CONTEXTO ━━━━━━━━━━━━━━━━━━

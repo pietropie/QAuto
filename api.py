@@ -384,6 +384,25 @@ async def get_history_endpoint(limit: int = 20, token: str = Depends(oauth2_sche
     return {"runs": runs, "total": len(runs)}
 
 
+@app.get("/api/history/{run_id}")
+async def get_run_detail(run_id: str, token: str = Depends(oauth2_scheme)):
+    """Retorna o detalhe completo de um run (suites, testes, screenshots)."""
+    r = get_client()
+    email = None
+    if token:
+        try:
+            email = decode_token(token)
+        except JWTError:
+            pass
+
+    # Busca no histórico do usuário ou global
+    runs = get_user_history(r, email, limit=100) if email else get_history(r, limit=100)
+    run = next((rn for rn in runs if rn.get("id") == run_id), None)
+    if not run:
+        raise HTTPException(status_code=404, detail="Run não encontrado")
+    return run
+
+
 # ─────────────────────────────────────────────────────────────
 # Contexto acumulado
 # ─────────────────────────────────────────────────────────────

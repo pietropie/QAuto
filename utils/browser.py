@@ -68,14 +68,29 @@ def login(page: Page, config: dict) -> bool:
         return False
 
 
-def take_screenshot(page: Page, name: str, screenshots_dir: str) -> str:
-    """Tira um screenshot e salva no diretório configurado. Retorna o caminho."""
-    Path(screenshots_dir).mkdir(parents=True, exist_ok=True)
-    timestamp  = int(time.time())
-    safe_name  = name.replace(" ", "_").replace("/", "-").replace(":", "-")
-    screenshot_path = str(Path(screenshots_dir) / f"{safe_name}_{timestamp}.png")
-    page.screenshot(path=screenshot_path, full_page=True)
-    return screenshot_path
+def take_screenshot(page: Page, name: str, screenshots_dir: str = "") -> str:
+    """
+    Tira um screenshot JPEG e retorna como data URL base64.
+    O arquivo também é salvo em disco se screenshots_dir for informado.
+    Retorna string vazia em caso de erro.
+    """
+    import base64
+    try:
+        buf = page.screenshot(type="jpeg", quality=55, full_page=False)
+        b64 = base64.b64encode(buf).decode("ascii")
+        # Salva em disco opcionalmente (backup)
+        if screenshots_dir:
+            try:
+                Path(screenshots_dir).mkdir(parents=True, exist_ok=True)
+                safe_name = name.replace(" ", "_").replace("/", "-").replace(":", "-")
+                disk_path = str(Path(screenshots_dir) / f"{safe_name}_{int(time.time())}.jpg")
+                Path(disk_path).write_bytes(buf)
+            except Exception:
+                pass
+        return f"data:image/jpeg;base64,{b64}"
+    except Exception as e:
+        print(f"  [WARN] Screenshot falhou ({name}): {e}")
+        return ""
 
 
 def navigate_to(page: Page, base_url: str, path: str):
