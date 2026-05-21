@@ -9,7 +9,18 @@ from pathlib import Path
 
 
 def _enc(p):
+    """Extrai base64 de data URL ou lê de arquivo de disco."""
+    if isinstance(p, str) and p.startswith("data:"):
+        return p.split(",", 1)[1]
     return base64.standard_b64encode(Path(p).read_bytes()).decode("utf-8")
+
+
+def _media_type(p):
+    """Detecta media type de data URL ou extensão de arquivo."""
+    if isinstance(p, str) and p.startswith("data:"):
+        return p.split(";")[0].split(":")[1]  # ex: "image/jpeg"
+    ext = Path(p).suffix.lower().replace(".", "")
+    return "image/" + (ext if ext in ("png", "jpg", "jpeg", "gif", "webp") else "jpeg")
 
 
 def _parse_json(raw):
@@ -21,8 +32,7 @@ def _parse_json(raw):
 
 def _call_ai(prompt, screenshot_path, api_key, model, provider):
     img_b64 = _enc(screenshot_path)
-    ext = Path(screenshot_path).suffix.lower().replace(".", "")
-    media = "image/" + (ext if ext in ("png", "jpg", "jpeg", "gif", "webp") else "png")
+    media   = _media_type(screenshot_path)
 
     if provider == "claude":
         import anthropic

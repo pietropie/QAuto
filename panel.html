@@ -1173,7 +1173,7 @@ function renderTestItem(t, rid) {
         <div style="font-size:.88rem;font-weight:500;word-break:break-word">${esc(t.name||'')}</div>
         ${t._suite?`<div style="font-size:.73rem;color:var(--muted);margin-bottom:3px">Suite: ${esc(t._suite)}</div>`:''}
         ${t.message?`<div style="font-size:.82rem;color:var(--muted);margin-top:3px;white-space:pre-wrap;word-break:break-word">${esc(t.message)}</div>`:''}
-        ${t.ai_analysis?`<div style="font-size:.82rem;color:var(--accent);margin-top:4px;font-style:italic">🤖 ${esc(t.ai_analysis)}</div>`:''}
+        ${t.ai_analysis?`<div style="font-size:.82rem;color:var(--muted);margin-top:6px;line-height:1.5">${t.ai_analysis}</div>`:''}
         ${hasShot ? `<div style="margin-top:8px">
           <img id="${ssId}" src="${t.screenshot}"
             style="max-width:100%;border-radius:6px;cursor:zoom-in;border:1px solid var(--border);max-height:180px;object-fit:contain"

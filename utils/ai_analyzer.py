@@ -8,7 +8,18 @@ from pathlib import Path
 
 
 def _encode_image(image_path):
+    """Extrai base64 de data URL ou lê de arquivo de disco."""
+    if isinstance(image_path, str) and image_path.startswith("data:"):
+        return image_path.split(",", 1)[1]
     return base64.standard_b64encode(Path(image_path).read_bytes()).decode("utf-8")
+
+
+def _media_type(image_path):
+    """Detecta media type de data URL ou extensão de arquivo."""
+    if isinstance(image_path, str) and image_path.startswith("data:"):
+        return image_path.split(";")[0].split(":")[1]
+    ext = Path(image_path).suffix.lower().replace(".", "")
+    return "image/" + (ext if ext in ("png", "jpg", "jpeg", "gif", "webp") else "jpeg")
 
 
 def _parse_json(raw):
@@ -21,8 +32,7 @@ def _parse_json(raw):
 def _call_ai(prompt, image_path, api_key, model, provider):
     """Chama a IA correta baseado no provider."""
     img_b64 = _encode_image(image_path)
-    ext = Path(image_path).suffix.lower().replace(".", "")
-    media = "image/" + (ext if ext in ("png", "jpg", "jpeg", "gif", "webp") else "png")
+    media   = _media_type(image_path)
 
     if provider == "claude":
         import anthropic
@@ -115,6 +125,8 @@ def compare_viewports(desktop_path, mobile_path, page_name, config):
     )
 
     def enc(p):
+        if isinstance(p, str) and p.startswith("data:"):
+            return p.split(",", 1)[1]
         return base64.standard_b64encode(Path(p).read_bytes()).decode("utf-8")
 
     try:
